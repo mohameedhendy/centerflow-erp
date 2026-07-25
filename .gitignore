@@ -1,0 +1,42 @@
+# Maven build output
+target/
+**/target/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Test and coverage reports
+coverage/
+*.exec
+
+# Docker local overrides
+docker-compose.override.yml
+compose.override.yaml
