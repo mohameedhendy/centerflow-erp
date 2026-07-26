@@ -59,13 +59,16 @@ class IdentityRepositoryTests {
                 TEST_TIME
         );
 
-        User savedUser = userRepository.saveAndFlush(user);
+        User savedUser =
+                userRepository.saveAndFlush(user);
 
         assertThat(savedUser.getId()).isNotNull();
         assertThat(savedUser.getEmail())
                 .isEqualTo("student@centerflow.com");
         assertThat(savedUser.getStatus())
-                .isEqualTo(UserStatus.PENDING_VERIFICATION);
+                .isEqualTo(
+                        UserStatus.PENDING_VERIFICATION
+                );
         assertThat(savedUser.isEmailVerified()).isFalse();
 
         assertThat(
@@ -93,21 +96,18 @@ class IdentityRepositoryTests {
                 )
         );
 
-        Role role = roleRepository.saveAndFlush(
-                Role.create(
-                        RoleName.ADMIN,
-                        "Full system access",
-                        TEST_TIME
-                )
-        );
+        Role role = roleRepository
+                .findByName(RoleName.ADMIN)
+                .orElseThrow();
 
-        Permission permission = permissionRepository.saveAndFlush(
-                Permission.create(
-                        "user_create",
-                        "Create identity users",
-                        TEST_TIME
-                )
-        );
+        Permission permission =
+                permissionRepository.saveAndFlush(
+                        Permission.create(
+                                "user_create",
+                                "Create identity users",
+                                TEST_TIME
+                        )
+                );
 
         userRoleRepository.saveAndFlush(
                 UserRole.assign(
@@ -127,19 +127,20 @@ class IdentityRepositoryTests {
                 )
         );
 
-        assertThat(roleRepository.findByName(RoleName.ADMIN))
-                .isPresent()
-                .contains(role);
-
-        assertThat(permissionRepository.findByName("USER_CREATE"))
+        assertThat(
+                permissionRepository.findByName(
+                        "USER_CREATE"
+                )
+        )
                 .isPresent()
                 .contains(permission);
 
         assertThat(
-                userRoleRepository.existsByIdUserIdAndIdRoleId(
-                        user.getId(),
-                        role.getId()
-                )
+                userRoleRepository
+                        .existsByIdUserIdAndIdRoleId(
+                                user.getId(),
+                                role.getId()
+                        )
         ).isTrue();
 
         assertThat(
@@ -151,11 +152,15 @@ class IdentityRepositoryTests {
         ).isTrue();
 
         assertThat(
-                userRoleRepository.findAllByIdUserId(user.getId())
+                userRoleRepository.findAllByIdUserId(
+                        user.getId()
+                )
         ).hasSize(1);
 
         assertThat(
-                rolePermissionRepository.findAllByIdRoleId(role.getId())
+                rolePermissionRepository.findAllByIdRoleId(
+                        role.getId()
+                )
         ).hasSize(1);
     }
 }

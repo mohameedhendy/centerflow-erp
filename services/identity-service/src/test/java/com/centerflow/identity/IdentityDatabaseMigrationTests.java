@@ -39,22 +39,38 @@ class IdentityDatabaseMigrationTests {
     }
 
     @Test
-    void flywayAppliesInitialIdentitySchema() {
-        MigrationInfo currentMigration = flyway.info().current();
+    void flywayAppliesIdentitySchemaAndSeedData() {
+        MigrationInfo currentMigration =
+                flyway.info().current();
 
         assertThat(currentMigration).isNotNull();
         assertThat(currentMigration.getVersion()).isNotNull();
-        assertThat(currentMigration.getVersion().getVersion()).isEqualTo("1");
+        assertThat(
+                currentMigration.getVersion().getVersion()
+        ).isEqualTo("2");
 
         for (String tableName : EXPECTED_TABLES) {
-            Long rowCount = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM " + tableName,
-                    Long.class
+            Integer tableCount = jdbcTemplate.queryForObject(
+                    """
+                    SELECT COUNT(*)
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                      AND table_name = ?
+                    """,
+                    Integer.class,
+                    tableName
             );
 
-            assertThat(rowCount)
-                    .as("Table %s should exist and initially be empty", tableName)
-                    .isZero();
+            assertThat(tableCount)
+                    .as("Table %s should exist", tableName)
+                    .isEqualTo(1);
         }
+
+        Integer roleCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM roles",
+                Integer.class
+        );
+
+        assertThat(roleCount).isEqualTo(6);
     }
 }

@@ -53,11 +53,34 @@ public class User {
             Instant createdAt
     ) {
         this.email = normalizeEmail(email);
-        this.passwordHash = requireText(passwordHash, "Password hash is required");
-        this.status = Objects.requireNonNull(status, "User status is required");
+        this.passwordHash = requireText(
+                passwordHash,
+                "Password hash is required"
+        );
+        this.status = Objects.requireNonNull(
+                status,
+                "User status is required"
+        );
         this.emailVerified = emailVerified;
-        this.createdAt = Objects.requireNonNull(createdAt, "Creation time is required");
+        this.createdAt = Objects.requireNonNull(
+                createdAt,
+                "Creation time is required"
+        );
         this.updatedAt = createdAt;
+    }
+
+    public static User register(
+            String email,
+            String passwordHash,
+            Instant createdAt
+    ) {
+        return new User(
+                email,
+                passwordHash,
+                UserStatus.ACTIVE,
+                false,
+                createdAt
+        );
     }
 
     public static User createPendingVerification(
@@ -94,7 +117,10 @@ public class User {
         this.updatedAt = requireTime(changedAt);
     }
 
-    public void changePasswordHash(String newPasswordHash, Instant changedAt) {
+    public void changePasswordHash(
+            String newPasswordHash,
+            Instant changedAt
+    ) {
         this.passwordHash = requireText(
                 newPasswordHash,
                 "Password hash is required"
@@ -145,8 +171,10 @@ public class User {
     }
 
     private static String normalizeEmail(String email) {
-        String normalizedEmail = requireText(email, "Email is required")
-                .toLowerCase(Locale.ROOT);
+        String normalizedEmail = requireText(
+                email,
+                "Email is required"
+        ).toLowerCase(Locale.ROOT);
 
         if (normalizedEmail.length() > 320) {
             throw new IllegalArgumentException(
@@ -157,7 +185,10 @@ public class User {
         return normalizedEmail;
     }
 
-    private static String requireText(String value, String message) {
+    private static String requireText(
+            String value,
+            String message
+    ) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(message);
         }
@@ -166,6 +197,9 @@ public class User {
     }
 
     private static Instant requireTime(Instant value) {
-        return Objects.requireNonNull(value, "Change time is required");
+        return Objects.requireNonNull(
+                value,
+                "Change time is required"
+        );
     }
 }
