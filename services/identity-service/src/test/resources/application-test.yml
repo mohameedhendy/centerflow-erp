@@ -22,3 +22,7 @@ security:
     access-token-ttl: PT15M
     refresh-token-ttl: PT168H
     secret: test-jwt-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+  password-reset:
+    token-ttl: PT15M
+    expose-token-in-response: true

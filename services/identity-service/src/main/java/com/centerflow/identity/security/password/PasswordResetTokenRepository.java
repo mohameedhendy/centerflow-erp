@@ -1,4 +1,4 @@
-package com.centerflow.identity.security.session;
+package com.centerflow.identity.security.password;
 
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,16 +11,16 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface RefreshTokenSessionRepository
-        extends JpaRepository<RefreshTokenSession, UUID> {
+public interface PasswordResetTokenRepository
+        extends JpaRepository<PasswordResetToken, UUID> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-            SELECT session
-            FROM RefreshTokenSession session
-            WHERE session.tokenHash = :tokenHash
+            SELECT token
+            FROM PasswordResetToken token
+            WHERE token.tokenHash = :tokenHash
             """)
-    Optional<RefreshTokenSession>
+    Optional<PasswordResetToken>
     findByTokenHashForUpdate(
             @Param("tokenHash") String tokenHash
     );
@@ -30,10 +30,11 @@ public interface RefreshTokenSessionRepository
             flushAutomatically = true
     )
     @Query("""
-            UPDATE RefreshTokenSession session
-            SET session.revokedAt = :revokedAt
-            WHERE session.userId = :userId
-              AND session.revokedAt IS NULL
+            UPDATE PasswordResetToken token
+            SET token.revokedAt = :revokedAt
+            WHERE token.userId = :userId
+              AND token.usedAt IS NULL
+              AND token.revokedAt IS NULL
             """)
     int revokeAllActiveByUserId(
             @Param("userId") UUID userId,

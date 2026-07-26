@@ -2,6 +2,7 @@ package com.centerflow.identity.common.api;
 
 import com.centerflow.identity.common.exception.DuplicateEmailException;
 import com.centerflow.identity.common.exception.InvalidCredentialsException;
+import com.centerflow.identity.common.exception.InvalidPasswordResetTokenException;
 import com.centerflow.identity.common.exception.InvalidRefreshTokenException;
 import com.centerflow.identity.common.exception.RequiredRoleNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -127,5 +128,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+
+    @ExceptionHandler(
+            InvalidPasswordResetTokenException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidPasswordResetToken(
+            InvalidPasswordResetTokenException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
     }
 }

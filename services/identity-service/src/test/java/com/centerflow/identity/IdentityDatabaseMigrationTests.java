@@ -43,34 +43,61 @@ class IdentityDatabaseMigrationTests {
         MigrationInfo currentMigration =
                 flyway.info().current();
 
-        assertThat(currentMigration).isNotNull();
-        assertThat(currentMigration.getVersion()).isNotNull();
+        assertThat(currentMigration)
+                .isNotNull();
+
+        assertThat(currentMigration.getVersion())
+                .isNotNull();
+
         assertThat(
-                currentMigration.getVersion().getVersion()
-        ).isEqualTo("2");
+                currentMigration
+                        .getVersion()
+                        .getVersion()
+        ).isEqualTo("3");
 
         for (String tableName : EXPECTED_TABLES) {
-            Integer tableCount = jdbcTemplate.queryForObject(
-                    """
-                    SELECT COUNT(*)
-                    FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                      AND table_name = ?
-                    """,
-                    Integer.class,
-                    tableName
-            );
+            Integer tableCount =
+                    jdbcTemplate.queryForObject(
+                            """
+                            SELECT COUNT(*)
+                            FROM information_schema.tables
+                            WHERE table_schema = 'public'
+                              AND table_name = ?
+                            """,
+                            Integer.class,
+                            tableName
+                    );
 
             assertThat(tableCount)
-                    .as("Table %s should exist", tableName)
+                    .as(
+                            "Table %s should exist",
+                            tableName
+                    )
                     .isEqualTo(1);
         }
 
-        Integer roleCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM roles",
-                Integer.class
-        );
+        Integer roleCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM roles",
+                        Integer.class
+                );
 
-        assertThat(roleCount).isEqualTo(6);
+        assertThat(roleCount)
+                .isEqualTo(6);
+
+        Integer revokedAtColumnCount =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*)
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND table_name = 'password_reset_tokens'
+                          AND column_name = 'revoked_at'
+                        """,
+                        Integer.class
+                );
+
+        assertThat(revokedAtColumnCount)
+                .isEqualTo(1);
     }
 }
