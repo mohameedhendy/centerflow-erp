@@ -23,6 +23,13 @@ spring:
     locations:
       - classpath:db/migration
 
+security:
+  jwt:
+    issuer: "${JWT_ISSUER:centerflow-identity}"
+    audience: "${JWT_AUDIENCE:centerflow-api}"
+    access-token-ttl: "${JWT_ACCESS_TOKEN_TTL:PT15M}"
+    secret: "${JWT_SECRET}"
+
 server:
   port: 8081
 

@@ -1,6 +1,7 @@
 package com.centerflow.identity.common.api;
 
 import com.centerflow.identity.common.exception.DuplicateEmailException;
+import com.centerflow.identity.common.exception.InvalidCredentialsException;
 import com.centerflow.identity.common.exception.RequiredRoleNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,8 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<ApiErrorResponse> handleDuplicateEmail(
+    public ResponseEntity<ApiErrorResponse>
+    handleDuplicateEmail(
             DuplicateEmailException exception,
             HttpServletRequest request
     ) {
@@ -29,8 +31,25 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidation(
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(
+            MethodArgumentNotValidException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request
     ) {
@@ -56,8 +75,11 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(RequiredRoleNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleMissingRole(
+    @ExceptionHandler(
+            RequiredRoleNotFoundException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleMissingRole(
             RequiredRoleNotFoundException exception,
             HttpServletRequest request
     ) {
@@ -69,20 +91,22 @@ public class GlobalExceptionHandler {
         );
     }
 
-    private ResponseEntity<ApiErrorResponse> buildResponse(
+    private ResponseEntity<ApiErrorResponse>
+    buildResponse(
             HttpStatus status,
             String message,
             String path,
             Map<String, String> validationErrors
     ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                path,
-                validationErrors
-        );
+        ApiErrorResponse response =
+                new ApiErrorResponse(
+                        Instant.now(),
+                        status.value(),
+                        status.getReasonPhrase(),
+                        message,
+                        path,
+                        validationErrors
+                );
 
         return ResponseEntity
                 .status(status)

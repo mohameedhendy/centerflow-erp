@@ -14,3 +14,10 @@ spring:
     enabled: true
     locations:
       - classpath:db/migration
+
+security:
+  jwt:
+    issuer: centerflow-identity-test
+    audience: centerflow-api-test
+    access-token-ttl: PT15M
+    secret: test-jwt-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ
