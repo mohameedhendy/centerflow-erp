@@ -2,6 +2,7 @@ package com.centerflow.identity.common.api;
 
 import com.centerflow.identity.common.exception.DuplicateEmailException;
 import com.centerflow.identity.common.exception.InvalidCredentialsException;
+import com.centerflow.identity.common.exception.InvalidRefreshTokenException;
 import com.centerflow.identity.common.exception.RequiredRoleNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -9,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,6 +35,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse>
     handleInvalidCredentials(
             InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidRefreshToken(
+            InvalidRefreshTokenException exception,
             HttpServletRequest request
     ) {
         return buildResponse(

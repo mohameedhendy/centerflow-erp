@@ -20,4 +20,5 @@ security:
     issuer: centerflow-identity-test
     audience: centerflow-api-test
     access-token-ttl: PT15M
+    refresh-token-ttl: PT168H
     secret: test-jwt-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ

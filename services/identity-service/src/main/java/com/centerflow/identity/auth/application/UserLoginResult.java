@@ -11,6 +11,9 @@ public record UserLoginResult(
         String tokenType,
         long expiresIn,
         Instant expiresAt,
+        String refreshToken,
+        long refreshTokenExpiresIn,
+        Instant refreshTokenExpiresAt,
         UUID userId,
         String email,
         List<RoleName> roles

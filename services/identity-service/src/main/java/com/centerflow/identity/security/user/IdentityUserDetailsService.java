@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class IdentityUserDetailsService
@@ -40,6 +41,28 @@ public class IdentityUserDetailsService
                         )
                 );
 
+        return createPrincipal(user);
+    }
+
+    @Transactional(readOnly = true)
+    public IdentityUserPrincipal loadUserById(
+            UUID userId
+    ) throws UsernameNotFoundException {
+
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new UsernameNotFoundException(
+                                "Identity user was not found"
+                        )
+                );
+
+        return createPrincipal(user);
+    }
+
+    private IdentityUserPrincipal createPrincipal(
+            User user
+    ) {
         List<RoleName> roles =
                 roleRepository.findRoleNamesByUserId(
                         user.getId()

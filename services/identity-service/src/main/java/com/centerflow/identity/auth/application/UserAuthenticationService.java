@@ -1,8 +1,6 @@
 package com.centerflow.identity.auth.application;
 
 import com.centerflow.identity.common.exception.InvalidCredentialsException;
-import com.centerflow.identity.security.jwt.AccessTokenResult;
-import com.centerflow.identity.security.jwt.JwtAccessTokenService;
 import com.centerflow.identity.security.user.IdentityUserPrincipal;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,17 +14,20 @@ import java.util.Locale;
 @Service
 public class UserAuthenticationService {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtAccessTokenService accessTokenService;
+    private final AuthenticationManager
+            authenticationManager;
+
+    private final UserTokenService userTokenService;
 
     public UserAuthenticationService(
             AuthenticationManager authenticationManager,
-            JwtAccessTokenService accessTokenService
+            UserTokenService userTokenService
     ) {
         this.authenticationManager =
                 authenticationManager;
-        this.accessTokenService =
-                accessTokenService;
+
+        this.userTokenService =
+                userTokenService;
     }
 
     public UserLoginResult login(
@@ -47,6 +48,7 @@ public class UserAuthenticationService {
                                     rawPassword
                             )
                     );
+
         } catch (
                 BadCredentialsException
                 | AccountStatusException exception
@@ -58,17 +60,6 @@ public class UserAuthenticationService {
                 (IdentityUserPrincipal)
                         authentication.getPrincipal();
 
-        AccessTokenResult accessToken =
-                accessTokenService.issueToken(principal);
-
-        return new UserLoginResult(
-                accessToken.tokenValue(),
-                "Bearer",
-                accessToken.expiresInSeconds(),
-                accessToken.expiresAt(),
-                principal.getUserId(),
-                principal.getUsername(),
-                principal.getRoles()
-        );
+        return userTokenService.issueFor(principal);
     }
 }

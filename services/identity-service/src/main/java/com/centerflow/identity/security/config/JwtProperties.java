@@ -9,6 +9,7 @@ public record JwtProperties(
         String issuer,
         String audience,
         Duration accessTokenTtl,
+        Duration refreshTokenTtl,
         String secret
 ) {
 
@@ -34,13 +35,15 @@ public record JwtProperties(
             );
         }
 
-        if (accessTokenTtl == null
-                || accessTokenTtl.isZero()
-                || accessTokenTtl.isNegative()) {
-            throw new IllegalArgumentException(
-                    "JWT access token TTL must be positive"
-            );
-        }
+        requirePositiveDuration(
+                accessTokenTtl,
+                "JWT access token TTL must be positive"
+        );
+
+        requirePositiveDuration(
+                refreshTokenTtl,
+                "JWT refresh token TTL must be positive"
+        );
     }
 
     private static String requireText(
@@ -52,5 +55,16 @@ public record JwtProperties(
         }
 
         return value.strip();
+    }
+
+    private static void requirePositiveDuration(
+            Duration duration,
+            String message
+    ) {
+        if (duration == null
+                || duration.isZero()
+                || duration.isNegative()) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }

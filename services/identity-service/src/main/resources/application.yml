@@ -28,6 +28,7 @@ security:
     issuer: "${JWT_ISSUER:centerflow-identity}"
     audience: "${JWT_AUDIENCE:centerflow-api}"
     access-token-ttl: "${JWT_ACCESS_TOKEN_TTL:PT15M}"
+    refresh-token-ttl: "${JWT_REFRESH_TOKEN_TTL:PT168H}"
     secret: "${JWT_SECRET}"
 
 server:

@@ -78,12 +78,24 @@ class UserLoginApiTests {
                                 .isNotEmpty()
                 )
                 .andExpect(
+                        jsonPath("$.refreshToken")
+                                .isNotEmpty()
+                )
+                .andExpect(
                         jsonPath("$.tokenType")
                                 .value("Bearer")
                 )
                 .andExpect(
                         jsonPath("$.expiresIn")
                                 .value(900)
+                )
+                .andExpect(
+                        jsonPath("$.refreshTokenExpiresIn")
+                                .value(604800)
+                )
+                .andExpect(
+                        jsonPath("$.refreshTokenExpiresAt")
+                                .isNotEmpty()
                 )
                 .andExpect(
                         jsonPath("$.email")

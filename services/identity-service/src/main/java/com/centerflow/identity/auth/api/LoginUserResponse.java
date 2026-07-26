@@ -12,6 +12,9 @@ public record LoginUserResponse(
         String tokenType,
         long expiresIn,
         Instant expiresAt,
+        String refreshToken,
+        long refreshTokenExpiresIn,
+        Instant refreshTokenExpiresAt,
         UUID userId,
         String email,
         List<RoleName> roles
@@ -25,6 +28,9 @@ public record LoginUserResponse(
                 result.tokenType(),
                 result.expiresIn(),
                 result.expiresAt(),
+                result.refreshToken(),
+                result.refreshTokenExpiresIn(),
+                result.refreshTokenExpiresAt(),
                 result.userId(),
                 result.email(),
                 result.roles()
