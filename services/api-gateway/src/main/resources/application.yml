@@ -2,8 +2,21 @@ spring:
   application:
     name: api-gateway
 
-  main:
-    web-application-type: reactive
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: identity-service
+              uri: "${IDENTITY_SERVICE_URL:http://localhost:8081}"
+              predicates:
+                - Path=/api/v1/auth/**
+
+security:
+  jwt:
+    issuer: "${JWT_ISSUER:centerflow-identity}"
+    audience: "${JWT_AUDIENCE:centerflow-api}"
+    secret: "${JWT_SECRET}"
 
 server:
   port: 8080

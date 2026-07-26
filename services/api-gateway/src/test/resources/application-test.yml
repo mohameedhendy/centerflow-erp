@@ -1,0 +1,5 @@
+security:
+  jwt:
+    issuer: centerflow-identity-test
+    audience: centerflow-api-test
+    secret: test-jwt-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ
