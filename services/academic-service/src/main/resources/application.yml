@@ -2,6 +2,27 @@ spring:
   application:
     name: academic-service
 
+  datasource:
+    url: "jdbc:postgresql://localhost:${POSTGRES_PORT:5433}/${ACADEMIC_DB_NAME:academic_db}"
+    username: "${ACADEMIC_DB_USER:academic_app}"
+    password: "${ACADEMIC_DB_PASSWORD}"
+
+  jpa:
+    open-in-view: false
+
+    hibernate:
+      ddl-auto: validate
+
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations:
+      - classpath:db/migration
+
 server:
   port: 8082
 
