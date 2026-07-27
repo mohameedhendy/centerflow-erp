@@ -1,5 +1,10 @@
 package com.centerflow.academic.common.api;
 
+import com.centerflow.academic.common.exception.BatchSessionNotFoundException;
+import com.centerflow.academic.common.exception.InvalidSessionConfigurationException;
+import com.centerflow.academic.common.exception.InvalidSessionStatusTransitionException;
+import com.centerflow.academic.common.exception.SessionConfigurationLockedException;
+import com.centerflow.academic.common.exception.SessionConflictException;
 import com.centerflow.academic.common.exception.AcademicResourceUnavailableException;
 import com.centerflow.academic.common.exception.BatchConfigurationLockedException;
 import com.centerflow.academic.common.exception.BatchNotFoundException;
@@ -49,7 +54,10 @@ public class GlobalExceptionHandler {
             AcademicResourceUnavailableException.class,
             InvalidBatchStatusTransitionException.class,
             BatchConfigurationLockedException.class,
-            ScheduleConflictException.class
+            ScheduleConflictException.class,
+            SessionConflictException.class,
+            InvalidSessionStatusTransitionException.class,
+            SessionConfigurationLockedException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleConflict(
@@ -71,7 +79,8 @@ public class GlobalExceptionHandler {
             CourseLevelNotFoundException.class,
             InstructorNotFoundException.class,
             BatchNotFoundException.class,
-            BatchScheduleNotFoundException.class
+            BatchScheduleNotFoundException.class,
+            BatchSessionNotFoundException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleNotFound(
@@ -90,7 +99,8 @@ public class GlobalExceptionHandler {
             InvalidPaginationException.class,
             InvalidCapacityRangeException.class,
             InvalidBatchConfigurationException.class,
-            InvalidScheduleConfigurationException.class
+            InvalidScheduleConfigurationException.class,
+            InvalidSessionConfigurationException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleInvalidRequest(

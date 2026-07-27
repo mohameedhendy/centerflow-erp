@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
+import java.util.List;
 
 public interface BatchScheduleRepository
         extends JpaRepository<BatchSchedule, UUID> {
@@ -115,5 +116,10 @@ public interface BatchScheduleRepository
             LocalDate candidateEndDate,
             @Param("excludedScheduleId")
             UUID excludedScheduleId
+    );
+
+    List<BatchSchedule>
+    findAllByBatchIdAndActiveTrueOrderByDayOfWeekAscStartTimeAsc(
+            UUID batchId
     );
 }
