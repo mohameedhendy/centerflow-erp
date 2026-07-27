@@ -25,6 +25,8 @@ import com.centerflow.academic.courselevel.domain.CourseLevel;
 import com.centerflow.academic.courselevel.repository.CourseLevelRepository;
 import com.centerflow.academic.instructor.domain.Instructor;
 import com.centerflow.academic.instructor.repository.InstructorRepository;
+import com.centerflow.academic.seatreservation.domain.SeatReservationStatus;
+import com.centerflow.academic.seatreservation.repository.SeatReservationRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,7 +51,9 @@ public class BatchService {
     private final CourseLevelRepository courseLevelRepository;
     private final CourseRepository courseRepository;
     private final InstructorRepository instructorRepository;
+    private final SeatReservationRepository seatReservationRepository;
     private final Clock clock;
+
 
     public BatchService(
             BatchRepository batchRepository,
@@ -58,6 +62,7 @@ public class BatchService {
             CourseLevelRepository courseLevelRepository,
             CourseRepository courseRepository,
             InstructorRepository instructorRepository,
+            SeatReservationRepository seatReservationRepository,
             Clock clock
     ) {
         this.batchRepository = batchRepository;
@@ -66,6 +71,7 @@ public class BatchService {
         this.courseLevelRepository = courseLevelRepository;
         this.courseRepository = courseRepository;
         this.instructorRepository = instructorRepository;
+        this.seatReservationRepository = seatReservationRepository;
         this.clock = clock;
     }
 
@@ -211,6 +217,20 @@ public class BatchService {
                 .allowsConfigurationChanges()) {
             throw new BatchConfigurationLockedException(
                     batch.getStatus()
+            );
+        }
+
+        long reservedSeats =
+                seatReservationRepository
+                        .countByBatchIdAndStatus(
+                                batchId,
+                                SeatReservationStatus.RESERVED
+                        );
+
+        if (capacity < reservedSeats) {
+            throw new InvalidBatchConfigurationException(
+                    "Batch capacity cannot be less than reserved seats. Reserved seats: "
+                            + reservedSeats
             );
         }
 

@@ -1,5 +1,7 @@
 package com.centerflow.academic.common.api;
 
+import com.centerflow.academic.common.exception.BatchCapacityExceededException;
+import com.centerflow.academic.common.exception.BatchNotOpenForEnrollmentException;
 import com.centerflow.academic.common.exception.BatchSessionNotFoundException;
 import com.centerflow.academic.common.exception.InvalidSessionConfigurationException;
 import com.centerflow.academic.common.exception.InvalidSessionStatusTransitionException;
@@ -19,6 +21,7 @@ import com.centerflow.academic.common.exception.DuplicateClassroomCodeException;
 import com.centerflow.academic.common.exception.DuplicateCourseCodeException;
 import com.centerflow.academic.common.exception.DuplicateCourseLevelException;
 import com.centerflow.academic.common.exception.DuplicateInstructorException;
+import com.centerflow.academic.common.exception.DuplicateSeatReservationException;
 import com.centerflow.academic.common.exception.InvalidBatchConfigurationException;
 import com.centerflow.academic.common.exception.InvalidBatchStatusTransitionException;
 import com.centerflow.academic.common.exception.InvalidScheduleConfigurationException;
@@ -28,6 +31,7 @@ import com.centerflow.academic.common.exception.InstructorNotFoundException;
 import com.centerflow.academic.common.exception.InvalidCapacityRangeException;
 import com.centerflow.academic.common.exception.InvalidPaginationException;
 import com.centerflow.academic.common.exception.ScheduleConflictException;
+import com.centerflow.academic.common.exception.SeatReservationNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +61,10 @@ public class GlobalExceptionHandler {
             ScheduleConflictException.class,
             SessionConflictException.class,
             InvalidSessionStatusTransitionException.class,
-            SessionConfigurationLockedException.class
+            SessionConfigurationLockedException.class,
+            BatchCapacityExceededException.class,
+            BatchNotOpenForEnrollmentException.class,
+            DuplicateSeatReservationException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleConflict(
@@ -80,7 +87,8 @@ public class GlobalExceptionHandler {
             InstructorNotFoundException.class,
             BatchNotFoundException.class,
             BatchScheduleNotFoundException.class,
-            BatchSessionNotFoundException.class
+            BatchSessionNotFoundException.class,
+            SeatReservationNotFoundException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleNotFound(

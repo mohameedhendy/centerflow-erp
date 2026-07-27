@@ -126,6 +126,18 @@ class AcademicDatabaseMigrationTests {
             "updated_at"
     );
 
+    private static final List<String>
+            SEAT_RESERVATION_COLUMNS = List.of(
+            "id",
+            "batch_id",
+            "enrollment_id",
+            "status",
+            "reserved_at",
+            "released_at",
+            "created_at",
+            "updated_at"
+    );
+
     private final Flyway flyway;
     private final JdbcTemplate jdbcTemplate;
 
@@ -151,7 +163,7 @@ class AcademicDatabaseMigrationTests {
                 currentMigration
                         .getVersion()
                         .getVersion()
-        ).isEqualTo("7");
+        ).isEqualTo("8");
 
         assertTableAndColumns(
                 "batches",
@@ -193,6 +205,11 @@ class AcademicDatabaseMigrationTests {
                 INSTRUCTOR_COLUMNS
         );
 
+        assertTableAndColumns(
+                "seat_reservations",
+                SEAT_RESERVATION_COLUMNS
+        );
+
         assertThat(countRows("batches")).isZero();
         assertThat(countRows("batch_schedules")).isZero();
         assertThat(countRows("batch_sessions")).isZero();
@@ -201,6 +218,7 @@ class AcademicDatabaseMigrationTests {
         assertThat(countRows("courses")).isZero();
         assertThat(countRows("course_levels")).isZero();
         assertThat(countRows("instructors")).isZero();
+        assertThat(countRows("seat_reservations")).isZero();
     }
 
     private Long countRows(String tableName) {
