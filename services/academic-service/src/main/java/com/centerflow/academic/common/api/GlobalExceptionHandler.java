@@ -8,8 +8,10 @@ import com.centerflow.academic.common.exception.DuplicateBranchCodeException;
 import com.centerflow.academic.common.exception.DuplicateClassroomCodeException;
 import com.centerflow.academic.common.exception.DuplicateCourseCodeException;
 import com.centerflow.academic.common.exception.DuplicateCourseLevelException;
+import com.centerflow.academic.common.exception.DuplicateInstructorException;
 import com.centerflow.academic.common.exception.InactiveBranchException;
 import com.centerflow.academic.common.exception.InactiveCourseException;
+import com.centerflow.academic.common.exception.InstructorNotFoundException;
 import com.centerflow.academic.common.exception.InvalidCapacityRangeException;
 import com.centerflow.academic.common.exception.InvalidPaginationException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +33,7 @@ public class GlobalExceptionHandler {
             DuplicateClassroomCodeException.class,
             DuplicateCourseCodeException.class,
             DuplicateCourseLevelException.class,
+            DuplicateInstructorException.class,
             InactiveBranchException.class,
             InactiveCourseException.class
     })
@@ -51,7 +54,8 @@ public class GlobalExceptionHandler {
             BranchNotFoundException.class,
             ClassroomNotFoundException.class,
             CourseNotFoundException.class,
-            CourseLevelNotFoundException.class
+            CourseLevelNotFoundException.class,
+            InstructorNotFoundException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleNotFound(
