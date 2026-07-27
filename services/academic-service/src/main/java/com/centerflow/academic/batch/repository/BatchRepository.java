@@ -5,10 +5,13 @@ import com.centerflow.academic.batch.domain.BatchStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface BatchRepository
@@ -69,5 +72,15 @@ public interface BatchRepository
             @Param("startDateTo")
             LocalDate startDateTo,
             Pageable pageable
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT batch
+        FROM Batch batch
+        WHERE batch.id = :batchId
+        """)
+    Optional<Batch> findByIdForUpdate(
+            @Param("batchId") UUID batchId
     );
 }

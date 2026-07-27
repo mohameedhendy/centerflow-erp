@@ -34,6 +34,18 @@ class AcademicDatabaseMigrationTests {
     );
 
     private static final List<String>
+            BATCH_SCHEDULE_COLUMNS = List.of(
+            "id",
+            "batch_id",
+            "day_of_week",
+            "start_time",
+            "end_time",
+            "active",
+            "created_at",
+            "updated_at"
+    );
+
+    private static final List<String>
             BRANCH_COLUMNS = List.of(
             "id",
             "code",
@@ -125,11 +137,16 @@ class AcademicDatabaseMigrationTests {
                 currentMigration
                         .getVersion()
                         .getVersion()
-        ).isEqualTo("5");
+        ).isEqualTo("6");
 
         assertTableAndColumns(
                 "batches",
                 BATCH_COLUMNS
+        );
+
+        assertTableAndColumns(
+                "batch_schedules",
+                BATCH_SCHEDULE_COLUMNS
         );
 
         assertTableAndColumns(
@@ -158,6 +175,7 @@ class AcademicDatabaseMigrationTests {
         );
 
         assertThat(countRows("batches")).isZero();
+        assertThat(countRows("batch_schedules")).isZero();
         assertThat(countRows("branches")).isZero();
         assertThat(countRows("classrooms")).isZero();
         assertThat(countRows("courses")).isZero();

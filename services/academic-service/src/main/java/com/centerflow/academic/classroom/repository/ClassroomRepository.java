@@ -4,9 +4,12 @@ import com.centerflow.academic.classroom.domain.Classroom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ClassroomRepository
@@ -55,5 +58,15 @@ public interface ClassroomRepository
             Integer maximumCapacity,
             @Param("active") Boolean active,
             Pageable pageable
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT classroom
+        FROM Classroom classroom
+        WHERE classroom.id = :classroomId
+        """)
+    Optional<Classroom> findByIdForUpdate(
+            @Param("classroomId") UUID classroomId
     );
 }

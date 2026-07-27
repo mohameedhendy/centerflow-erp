@@ -3,6 +3,7 @@ package com.centerflow.academic.common.api;
 import com.centerflow.academic.common.exception.AcademicResourceUnavailableException;
 import com.centerflow.academic.common.exception.BatchConfigurationLockedException;
 import com.centerflow.academic.common.exception.BatchNotFoundException;
+import com.centerflow.academic.common.exception.BatchScheduleNotFoundException;
 import com.centerflow.academic.common.exception.BranchNotFoundException;
 import com.centerflow.academic.common.exception.ClassroomNotFoundException;
 import com.centerflow.academic.common.exception.CourseLevelNotFoundException;
@@ -15,11 +16,13 @@ import com.centerflow.academic.common.exception.DuplicateCourseLevelException;
 import com.centerflow.academic.common.exception.DuplicateInstructorException;
 import com.centerflow.academic.common.exception.InvalidBatchConfigurationException;
 import com.centerflow.academic.common.exception.InvalidBatchStatusTransitionException;
+import com.centerflow.academic.common.exception.InvalidScheduleConfigurationException;
 import com.centerflow.academic.common.exception.InactiveBranchException;
 import com.centerflow.academic.common.exception.InactiveCourseException;
 import com.centerflow.academic.common.exception.InstructorNotFoundException;
 import com.centerflow.academic.common.exception.InvalidCapacityRangeException;
 import com.centerflow.academic.common.exception.InvalidPaginationException;
+import com.centerflow.academic.common.exception.ScheduleConflictException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +48,8 @@ public class GlobalExceptionHandler {
             DuplicateBatchCodeException.class,
             AcademicResourceUnavailableException.class,
             InvalidBatchStatusTransitionException.class,
-            BatchConfigurationLockedException.class
+            BatchConfigurationLockedException.class,
+            ScheduleConflictException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleConflict(
@@ -66,7 +70,8 @@ public class GlobalExceptionHandler {
             CourseNotFoundException.class,
             CourseLevelNotFoundException.class,
             InstructorNotFoundException.class,
-            BatchNotFoundException.class
+            BatchNotFoundException.class,
+            BatchScheduleNotFoundException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleNotFound(
@@ -84,7 +89,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             InvalidPaginationException.class,
             InvalidCapacityRangeException.class,
-            InvalidBatchConfigurationException.class
+            InvalidBatchConfigurationException.class,
+            InvalidScheduleConfigurationException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleInvalidRequest(
