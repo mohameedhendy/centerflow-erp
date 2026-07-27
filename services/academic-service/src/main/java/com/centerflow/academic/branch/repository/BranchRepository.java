@@ -18,28 +18,37 @@ public interface BranchRepository
     boolean existsByCode(String code);
 
     @Query("""
-            SELECT branch
-            FROM Branch branch
-            WHERE (
-                :search IS NULL
-                OR LOWER(branch.code) LIKE LOWER(
-                    CONCAT('%', :search, '%')
+        SELECT branch
+        FROM Branch branch
+        WHERE (
+            COALESCE(:keyword, '') = ''
+            OR LOWER(branch.code) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:keyword, ''),
+                    '%'
                 )
-                OR LOWER(branch.name) LIKE LOWER(
-                    CONCAT('%', :search, '%')
+            )
+            OR LOWER(branch.name) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:keyword, ''),
+                    '%'
                 )
             )
-            AND (
-                :city IS NULL
-                OR LOWER(branch.city) = LOWER(:city)
-            )
-            AND (
-                :active IS NULL
-                OR branch.active = :active
-            )
-            """)
+        )
+        AND (
+            COALESCE(:city, '') = ''
+            OR LOWER(branch.city) =
+               LOWER(COALESCE(:city, ''))
+        )
+        AND (
+            :active IS NULL
+            OR branch.active = :active
+        )
+        """)
     Page<Branch> search(
-            @Param("search") String search,
+            @Param("keyword") String keyword,
             @Param("city") String city,
             @Param("active") Boolean active,
             Pageable pageable

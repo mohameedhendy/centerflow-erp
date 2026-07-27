@@ -25,50 +25,65 @@ public interface InstructorRepository
     );
 
     @Query("""
-            SELECT instructor
-            FROM Instructor instructor
-            WHERE (
-                :search IS NULL
-                OR LOWER(instructor.code) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(instructor.firstName) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(instructor.lastName) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(
-                    CONCAT(
-                        CONCAT(
-                            instructor.firstName,
-                            ' '
-                        ),
-                        instructor.lastName
-                    )
-                ) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(instructor.email) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(instructor.phone) LIKE LOWER(
-                    CONCAT('%', :search, '%')
-                )
-                OR LOWER(instructor.specialization) LIKE LOWER(
-                    CONCAT('%', :search, '%')
+        SELECT instructor
+        FROM Instructor instructor
+        WHERE (
+            COALESCE(:search, '') = ''
+            OR LOWER(instructor.code) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
                 )
             )
-            AND (
-                :specialization IS NULL
-                OR LOWER(instructor.specialization)
-                    = LOWER(:specialization)
+            OR LOWER(instructor.firstName) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
+                )
             )
-            AND (
-                :active IS NULL
-                OR instructor.active = :active
+            OR LOWER(instructor.lastName) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
+                )
             )
-            """)
+            OR LOWER(instructor.email) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
+                )
+            )
+            OR LOWER(instructor.phone) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
+                )
+            )
+            OR LOWER(instructor.specialization) LIKE LOWER(
+                CONCAT(
+                    '%',
+                    COALESCE(:search, ''),
+                    '%'
+                )
+            )
+        )
+        AND (
+            COALESCE(:specialization, '') = ''
+            OR LOWER(instructor.specialization)
+               = LOWER(
+                    COALESCE(:specialization, '')
+               )
+        )
+        AND (
+            :active IS NULL
+            OR instructor.active = :active
+        )
+        """)
     Page<Instructor> search(
             @Param("search") String search,
             @Param("specialization")
