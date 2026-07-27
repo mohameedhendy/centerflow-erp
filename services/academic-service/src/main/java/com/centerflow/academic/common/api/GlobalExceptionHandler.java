@@ -2,9 +2,14 @@ package com.centerflow.academic.common.api;
 
 import com.centerflow.academic.common.exception.BranchNotFoundException;
 import com.centerflow.academic.common.exception.ClassroomNotFoundException;
+import com.centerflow.academic.common.exception.CourseLevelNotFoundException;
+import com.centerflow.academic.common.exception.CourseNotFoundException;
 import com.centerflow.academic.common.exception.DuplicateBranchCodeException;
 import com.centerflow.academic.common.exception.DuplicateClassroomCodeException;
+import com.centerflow.academic.common.exception.DuplicateCourseCodeException;
+import com.centerflow.academic.common.exception.DuplicateCourseLevelException;
 import com.centerflow.academic.common.exception.InactiveBranchException;
+import com.centerflow.academic.common.exception.InactiveCourseException;
 import com.centerflow.academic.common.exception.InvalidCapacityRangeException;
 import com.centerflow.academic.common.exception.InvalidPaginationException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +28,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             DuplicateBranchCodeException.class,
-            DuplicateClassroomCodeException.class
+            DuplicateClassroomCodeException.class,
+            DuplicateCourseCodeException.class,
+            DuplicateCourseLevelException.class,
+            InactiveBranchException.class,
+            InactiveCourseException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleConflict(
@@ -40,7 +49,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             BranchNotFoundException.class,
-            ClassroomNotFoundException.class
+            ClassroomNotFoundException.class,
+            CourseNotFoundException.class,
+            CourseLevelNotFoundException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleNotFound(
@@ -66,20 +77,6 @@ public class GlobalExceptionHandler {
     ) {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage(),
-                request.getRequestURI(),
-                Map.of()
-        );
-    }
-
-    @ExceptionHandler(InactiveBranchException.class)
-    public ResponseEntity<ApiErrorResponse>
-    handleInactiveBranch(
-            InactiveBranchException exception,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.CONFLICT,
                 exception.getMessage(),
                 request.getRequestURI(),
                 Map.of()

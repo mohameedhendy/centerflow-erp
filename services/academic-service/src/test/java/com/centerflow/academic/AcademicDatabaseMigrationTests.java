@@ -43,6 +43,31 @@ class AcademicDatabaseMigrationTests {
             "updated_at"
     );
 
+    private static final List<String>
+            COURSE_COLUMNS = List.of(
+            "id",
+            "code",
+            "name",
+            "description",
+            "active",
+            "created_at",
+            "updated_at"
+    );
+
+    private static final List<String>
+            COURSE_LEVEL_COLUMNS = List.of(
+            "id",
+            "course_id",
+            "code",
+            "name",
+            "sequence_number",
+            "duration_hours",
+            "description",
+            "active",
+            "created_at",
+            "updated_at"
+    );
+
     private final Flyway flyway;
     private final JdbcTemplate jdbcTemplate;
 
@@ -60,9 +85,7 @@ class AcademicDatabaseMigrationTests {
         MigrationInfo currentMigration =
                 flyway.info().current();
 
-        assertThat(currentMigration)
-                .isNotNull();
-
+        assertThat(currentMigration).isNotNull();
         assertThat(currentMigration.getVersion())
                 .isNotNull();
 
@@ -70,7 +93,7 @@ class AcademicDatabaseMigrationTests {
                 currentMigration
                         .getVersion()
                         .getVersion()
-        ).isEqualTo("2");
+        ).isEqualTo("3");
 
         assertTableAndColumns(
                 "branches",
@@ -82,20 +105,27 @@ class AcademicDatabaseMigrationTests {
                 CLASSROOM_COLUMNS
         );
 
-        Long branchCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM branches",
-                        Long.class
-                );
+        assertTableAndColumns(
+                "courses",
+                COURSE_COLUMNS
+        );
 
-        Long classroomCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM classrooms",
-                        Long.class
-                );
+        assertTableAndColumns(
+                "course_levels",
+                COURSE_LEVEL_COLUMNS
+        );
 
-        assertThat(branchCount).isZero();
-        assertThat(classroomCount).isZero();
+        assertThat(countRows("branches")).isZero();
+        assertThat(countRows("classrooms")).isZero();
+        assertThat(countRows("courses")).isZero();
+        assertThat(countRows("course_levels")).isZero();
+    }
+
+    private Long countRows(String tableName) {
+        return jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + tableName,
+                Long.class
+        );
     }
 
     private void assertTableAndColumns(
