@@ -1,7 +1,11 @@
 package com.centerflow.academic.common.api;
 
 import com.centerflow.academic.common.exception.BranchNotFoundException;
+import com.centerflow.academic.common.exception.ClassroomNotFoundException;
 import com.centerflow.academic.common.exception.DuplicateBranchCodeException;
+import com.centerflow.academic.common.exception.DuplicateClassroomCodeException;
+import com.centerflow.academic.common.exception.InactiveBranchException;
+import com.centerflow.academic.common.exception.InvalidCapacityRangeException;
 import com.centerflow.academic.common.exception.InvalidPaginationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -17,12 +21,13 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(
-            DuplicateBranchCodeException.class
-    )
+    @ExceptionHandler({
+            DuplicateBranchCodeException.class,
+            DuplicateClassroomCodeException.class
+    })
     public ResponseEntity<ApiErrorResponse>
-    handleDuplicateBranchCode(
-            DuplicateBranchCodeException exception,
+    handleConflict(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
@@ -33,10 +38,13 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(BranchNotFoundException.class)
+    @ExceptionHandler({
+            BranchNotFoundException.class,
+            ClassroomNotFoundException.class
+    })
     public ResponseEntity<ApiErrorResponse>
-    handleBranchNotFound(
-            BranchNotFoundException exception,
+    handleNotFound(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
@@ -47,14 +55,31 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(InvalidPaginationException.class)
+    @ExceptionHandler({
+            InvalidPaginationException.class,
+            InvalidCapacityRangeException.class
+    })
     public ResponseEntity<ApiErrorResponse>
-    handleInvalidPagination(
-            InvalidPaginationException exception,
+    handleInvalidRequest(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InactiveBranchException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInactiveBranch(
+            InactiveBranchException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
                 exception.getMessage(),
                 request.getRequestURI(),
                 Map.of()

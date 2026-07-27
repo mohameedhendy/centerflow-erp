@@ -16,19 +16,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class AcademicDatabaseMigrationTests {
 
-    private static final List<String> EXPECTED_COLUMNS =
-            List.of(
-                    "id",
-                    "code",
-                    "name",
-                    "phone",
-                    "email",
-                    "address",
-                    "city",
-                    "active",
-                    "created_at",
-                    "updated_at"
-            );
+    private static final List<String>
+            BRANCH_COLUMNS = List.of(
+            "id",
+            "code",
+            "name",
+            "phone",
+            "email",
+            "address",
+            "city",
+            "active",
+            "created_at",
+            "updated_at"
+    );
+
+    private static final List<String>
+            CLASSROOM_COLUMNS = List.of(
+            "id",
+            "branch_id",
+            "code",
+            "name",
+            "capacity",
+            "floor",
+            "active",
+            "created_at",
+            "updated_at"
+    );
 
     private final Flyway flyway;
     private final JdbcTemplate jdbcTemplate;
@@ -43,7 +56,7 @@ class AcademicDatabaseMigrationTests {
     }
 
     @Test
-    void flywayCreatesInitialAcademicSchema() {
+    void flywayCreatesAcademicSchema() {
         MigrationInfo currentMigration =
                 flyway.info().current();
 
@@ -57,43 +70,17 @@ class AcademicDatabaseMigrationTests {
                 currentMigration
                         .getVersion()
                         .getVersion()
-        ).isEqualTo("1");
+        ).isEqualTo("2");
 
-        Integer tableCount =
-                jdbcTemplate.queryForObject(
-                        """
-                        SELECT COUNT(*)
-                        FROM information_schema.tables
-                        WHERE table_schema = 'public'
-                          AND table_name = 'branches'
-                        """,
-                        Integer.class
-                );
+        assertTableAndColumns(
+                "branches",
+                BRANCH_COLUMNS
+        );
 
-        assertThat(tableCount)
-                .isEqualTo(1);
-
-        for (String columnName : EXPECTED_COLUMNS) {
-            Integer columnCount =
-                    jdbcTemplate.queryForObject(
-                            """
-                            SELECT COUNT(*)
-                            FROM information_schema.columns
-                            WHERE table_schema = 'public'
-                              AND table_name = 'branches'
-                              AND column_name = ?
-                            """,
-                            Integer.class,
-                            columnName
-                    );
-
-            assertThat(columnCount)
-                    .as(
-                            "Column %s should exist in branches",
-                            columnName
-                    )
-                    .isEqualTo(1);
-        }
+        assertTableAndColumns(
+                "classrooms",
+                CLASSROOM_COLUMNS
+        );
 
         Long branchCount =
                 jdbcTemplate.queryForObject(
@@ -101,7 +88,58 @@ class AcademicDatabaseMigrationTests {
                         Long.class
                 );
 
-        assertThat(branchCount)
-                .isZero();
+        Long classroomCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM classrooms",
+                        Long.class
+                );
+
+        assertThat(branchCount).isZero();
+        assertThat(classroomCount).isZero();
+    }
+
+    private void assertTableAndColumns(
+            String tableName,
+            List<String> expectedColumns
+    ) {
+        Integer tableCount =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*)
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public'
+                          AND table_name = ?
+                        """,
+                        Integer.class,
+                        tableName
+                );
+
+        assertThat(tableCount)
+                .as("Table %s should exist", tableName)
+                .isEqualTo(1);
+
+        for (String columnName : expectedColumns) {
+            Integer columnCount =
+                    jdbcTemplate.queryForObject(
+                            """
+                            SELECT COUNT(*)
+                            FROM information_schema.columns
+                            WHERE table_schema = 'public'
+                              AND table_name = ?
+                              AND column_name = ?
+                            """,
+                            Integer.class,
+                            tableName,
+                            columnName
+                    );
+
+            assertThat(columnCount)
+                    .as(
+                            "Column %s should exist in %s",
+                            columnName,
+                            tableName
+                    )
+                    .isEqualTo(1);
+        }
     }
 }
