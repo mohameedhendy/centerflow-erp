@@ -7,7 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
+import java.util.Optional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -100,5 +103,15 @@ public interface BatchSessionRepository
             @Param("endTime") LocalTime endTime,
             @Param("excludedSessionId")
             UUID excludedSessionId
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT session
+        FROM BatchSession session
+        WHERE session.id = :sessionId
+        """)
+    Optional<BatchSession> findByIdForUpdate(
+            @Param("sessionId") UUID sessionId
     );
 }

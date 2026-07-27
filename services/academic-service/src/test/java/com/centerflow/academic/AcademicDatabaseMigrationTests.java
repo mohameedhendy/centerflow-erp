@@ -17,6 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AcademicDatabaseMigrationTests {
 
     private static final List<String>
+            ATTENDANCE_RECORD_COLUMNS = List.of(
+            "id",
+            "session_id",
+            "enrollment_id",
+            "student_id",
+            "status",
+            "notes",
+            "marked_at",
+            "created_at",
+            "updated_at"
+    );
+
+    private static final List<String>
             BATCH_COLUMNS = List.of(
             "id",
             "code",
@@ -163,7 +176,12 @@ class AcademicDatabaseMigrationTests {
                 currentMigration
                         .getVersion()
                         .getVersion()
-        ).isEqualTo("8");
+        ).isEqualTo("9");
+
+        assertTableAndColumns(
+                "attendance_records",
+                ATTENDANCE_RECORD_COLUMNS
+        );
 
         assertTableAndColumns(
                 "batches",
@@ -210,6 +228,7 @@ class AcademicDatabaseMigrationTests {
                 SEAT_RESERVATION_COLUMNS
         );
 
+        assertThat(countRows("attendance_records")).isZero();
         assertThat(countRows("batches")).isZero();
         assertThat(countRows("batch_schedules")).isZero();
         assertThat(countRows("batch_sessions")).isZero();

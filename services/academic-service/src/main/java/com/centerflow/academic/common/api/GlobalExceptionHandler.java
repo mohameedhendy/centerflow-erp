@@ -38,7 +38,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import com.centerflow.academic.common.exception.AttendanceConflictException;
+import com.centerflow.academic.common.exception.AttendanceNotAllowedException;
+import com.centerflow.academic.common.exception.AttendanceStudentMismatchException;
+import com.centerflow.academic.common.exception.InvalidAttendanceConfigurationException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -64,7 +67,10 @@ public class GlobalExceptionHandler {
             SessionConfigurationLockedException.class,
             BatchCapacityExceededException.class,
             BatchNotOpenForEnrollmentException.class,
-            DuplicateSeatReservationException.class
+            DuplicateSeatReservationException.class,
+            AttendanceConflictException.class,
+            AttendanceNotAllowedException.class,
+            AttendanceStudentMismatchException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleConflict(
@@ -108,7 +114,8 @@ public class GlobalExceptionHandler {
             InvalidCapacityRangeException.class,
             InvalidBatchConfigurationException.class,
             InvalidScheduleConfigurationException.class,
-            InvalidSessionConfigurationException.class
+            InvalidSessionConfigurationException.class,
+            InvalidAttendanceConfigurationException.class
     })
     public ResponseEntity<ApiErrorResponse>
     handleInvalidRequest(
