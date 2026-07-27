@@ -1,0 +1,11 @@
+package com.centerflow.academic.common.exception;
+
+import java.util.UUID;
+
+public class BatchNotFoundException
+        extends RuntimeException {
+
+    public BatchNotFoundException(UUID batchId) {
+        super("Batch was not found: " + batchId);
+    }
+}
