@@ -29,6 +29,9 @@ import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @SpringBootTest(
@@ -44,8 +47,23 @@ class GatewayRoutingSecurityTests {
     private static final String CURRENT_USER_PATH =
             "/api/v1/auth/me";
 
+    private static final String ACADEMIC_BRANCHES_PATH =
+            "/api/v1/academic/branches";
+
+    private static final String INTERNAL_ACADEMIC_PATH =
+            "/api/v1/academic/internal/batches/"
+                    + "00000000-0000-0000-0000-000000000001"
+                    + "/seat-availability";
+
+    private static final AtomicInteger
+            INTERNAL_ACADEMIC_REQUESTS =
+            new AtomicInteger();
+
     private static final DisposableServer
             IDENTITY_SERVER = startIdentityServer();
+
+    private static final DisposableServer
+            ACADEMIC_SERVER = startAcademicServer();
 
     private final WebTestClient webTestClient;
     private final SecretKey secretKey;
@@ -71,11 +89,18 @@ class GatewayRoutingSecurityTests {
                 () -> "http://127.0.0.1:"
                         + IDENTITY_SERVER.port()
         );
+
+        registry.add(
+                "ACADEMIC_SERVICE_URL",
+                () -> "http://127.0.0.1:"
+                        + ACADEMIC_SERVER.port()
+        );
     }
 
     @AfterAll
-    static void stopIdentityServer() {
+    static void stopMockServices() {
         IDENTITY_SERVER.disposeNow();
+        ACADEMIC_SERVER.disposeNow();
     }
 
     @Test
@@ -101,7 +126,7 @@ class GatewayRoutingSecurityTests {
     }
 
     @Test
-    void rejectsProtectedRouteWithoutAccessToken() {
+    void rejectsProtectedIdentityRouteWithoutAccessToken() {
         webTestClient
                 .get()
                 .uri(CURRENT_USER_PATH)
@@ -111,7 +136,7 @@ class GatewayRoutingSecurityTests {
     }
 
     @Test
-    void forwardsProtectedRouteWithValidAccessToken() {
+    void forwardsProtectedIdentityRouteWithValidAccessToken() {
         String accessToken = createAccessToken(
                 jwtProperties.audience()
         );
@@ -153,6 +178,115 @@ class GatewayRoutingSecurityTests {
                 .isUnauthorized();
     }
 
+    @Test
+    void rejectsAcademicRouteWithoutAccessToken() {
+        webTestClient
+                .get()
+                .uri(ACADEMIC_BRANCHES_PATH)
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
+
+    @Test
+    void rejectsAcademicRouteWithMalformedAccessToken() {
+        webTestClient
+                .get()
+                .uri(ACADEMIC_BRANCHES_PATH)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer invalid-token"
+                )
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
+
+    @Test
+    void forwardsAcademicReadRouteWithValidAccessToken() {
+        String accessToken = createAccessToken(
+                jwtProperties.audience()
+        );
+
+        webTestClient
+                .get()
+                .uri(ACADEMIC_BRANCHES_PATH)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + accessToken
+                )
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("academic")
+                .jsonPath("$.operation")
+                .isEqualTo("read")
+                .jsonPath("$.authorizationForwarded")
+                .isEqualTo(true);
+    }
+
+    @Test
+    void forwardsAcademicWriteRouteWithValidAccessToken() {
+        String accessToken = createAccessToken(
+                jwtProperties.audience()
+        );
+
+        webTestClient
+                .post()
+                .uri(ACADEMIC_BRANCHES_PATH)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + accessToken
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                        """
+                        {
+                          "code": "CAIRO",
+                          "name": "Cairo Branch",
+                          "city": "Cairo"
+                        }
+                        """
+                )
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("academic")
+                .jsonPath("$.operation")
+                .isEqualTo("write")
+                .jsonPath("$.authorizationForwarded")
+                .isEqualTo(true);
+    }
+
+    @Test
+    void blocksInternalAcademicRouteWithValidAccessToken() {
+        String accessToken = createAccessToken(
+                jwtProperties.audience()
+        );
+
+        int requestsBefore =
+                INTERNAL_ACADEMIC_REQUESTS.get();
+
+        webTestClient
+                .get()
+                .uri(INTERNAL_ACADEMIC_PATH)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + accessToken
+                )
+                .exchange()
+                .expectStatus()
+                .isForbidden();
+
+        assertThat(
+                INTERNAL_ACADEMIC_REQUESTS.get()
+        ).isEqualTo(requestsBefore);
+    }
+
     private String createAccessToken(
             String audience
     ) {
@@ -162,6 +296,7 @@ class GatewayRoutingSecurityTests {
                 .build();
 
         Instant issuedAt = Instant.now();
+
         Instant expiresAt =
                 issuedAt.plusSeconds(900);
 
@@ -212,6 +347,7 @@ class GatewayRoutingSecurityTests {
                                                         .then(
                                                                 jsonResponse(
                                                                         response,
+                                                                        HttpResponseStatus.OK,
                                                                         """
                                                                         {
                                                                           "forwarded": true
@@ -231,12 +367,9 @@ class GatewayRoutingSecurityTests {
                                                                     HttpHeaderNames.AUTHORIZATION
                                                             );
 
-                                            if (authorization == null
-                                                    || !authorization
-                                                    .startsWith(
-                                                            "Bearer "
-                                                    )) {
-
+                                            if (!hasBearerToken(
+                                                    authorization
+                                            )) {
                                                 return response
                                                         .status(
                                                                 HttpResponseStatus
@@ -248,6 +381,7 @@ class GatewayRoutingSecurityTests {
 
                                             return jsonResponse(
                                                     response,
+                                                    HttpResponseStatus.OK,
                                                     """
                                                     {
                                                       "id": "6000f028-a9ae-4ce1-8c92-cea85744fe58",
@@ -262,12 +396,125 @@ class GatewayRoutingSecurityTests {
                 .bindNow();
     }
 
+    private static DisposableServer
+    startAcademicServer() {
+        return HttpServer.create()
+                .host("127.0.0.1")
+                .port(0)
+                .route(routes ->
+                        routes
+                                .get(
+                                        ACADEMIC_BRANCHES_PATH,
+                                        (request, response) -> {
+                                            String authorization =
+                                                    request
+                                                            .requestHeaders()
+                                                            .get(
+                                                                    HttpHeaderNames.AUTHORIZATION
+                                                            );
+
+                                            if (!hasBearerToken(
+                                                    authorization
+                                            )) {
+                                                return response
+                                                        .status(
+                                                                HttpResponseStatus
+                                                                        .INTERNAL_SERVER_ERROR
+                                                        )
+                                                        .send()
+                                                        .then();
+                                            }
+
+                                            return jsonResponse(
+                                                    response,
+                                                    HttpResponseStatus.OK,
+                                                    """
+                                                    {
+                                                      "service": "academic",
+                                                      "operation": "read",
+                                                      "authorizationForwarded": true
+                                                    }
+                                                    """
+                                            );
+                                        }
+                                )
+
+                                .post(
+                                        ACADEMIC_BRANCHES_PATH,
+                                        (request, response) -> {
+                                            String authorization =
+                                                    request
+                                                            .requestHeaders()
+                                                            .get(
+                                                                    HttpHeaderNames.AUTHORIZATION
+                                                            );
+
+                                            if (!hasBearerToken(
+                                                    authorization
+                                            )) {
+                                                return response
+                                                        .status(
+                                                                HttpResponseStatus
+                                                                        .INTERNAL_SERVER_ERROR
+                                                        )
+                                                        .send()
+                                                        .then();
+                                            }
+
+                                            return request.receive()
+                                                    .then(
+                                                            jsonResponse(
+                                                                    response,
+                                                                    HttpResponseStatus.CREATED,
+                                                                    """
+                                                                    {
+                                                                      "service": "academic",
+                                                                      "operation": "write",
+                                                                      "authorizationForwarded": true
+                                                                    }
+                                                                    """
+                                                            )
+                                                    );
+                                        }
+                                )
+
+                                .get(
+                                        INTERNAL_ACADEMIC_PATH,
+                                        (request, response) -> {
+                                            INTERNAL_ACADEMIC_REQUESTS
+                                                    .incrementAndGet();
+
+                                            return jsonResponse(
+                                                    response,
+                                                    HttpResponseStatus.OK,
+                                                    """
+                                                    {
+                                                      "internalReached": true
+                                                    }
+                                                    """
+                                            );
+                                        }
+                                )
+                )
+                .bindNow();
+    }
+
+    private static boolean hasBearerToken(
+            String authorization
+    ) {
+        return authorization != null
+                && authorization.startsWith(
+                "Bearer "
+        );
+    }
+
     private static Mono<Void> jsonResponse(
             HttpServerResponse response,
+            HttpResponseStatus status,
             String body
     ) {
         return response
-                .status(HttpResponseStatus.OK)
+                .status(status)
                 .header(
                         HttpHeaderNames.CONTENT_TYPE,
                         MediaType.APPLICATION_JSON_VALUE

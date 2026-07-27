@@ -53,6 +53,16 @@ public class GatewaySecurityConfiguration {
                                 )
                                 .permitAll()
 
+                                .pathMatchers(
+                                        "/api/v1/academic/internal/**"
+                                )
+                                .denyAll()
+
+                                .pathMatchers(
+                                        "/api/v1/academic/**"
+                                )
+                                .authenticated()
+
                                 .anyExchange()
                                 .authenticated()
                 )
