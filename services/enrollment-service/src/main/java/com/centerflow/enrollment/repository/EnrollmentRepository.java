@@ -5,6 +5,8 @@ import com.centerflow.enrollment.domain.EnrollmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -40,6 +42,49 @@ public interface EnrollmentRepository
     Page<Enrollment> findAllByBatchIdAndStatus(
             UUID batchId,
             EnrollmentStatus status,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT enrollment
+            FROM Enrollment enrollment
+            WHERE (
+                :studentId IS NULL
+                OR enrollment.studentId = :studentId
+            )
+            AND (
+                :batchId IS NULL
+                OR enrollment.batchId = :batchId
+            )
+            AND (
+                :status IS NULL
+                OR enrollment.status = :status
+            )
+            AND (
+                COALESCE(:enrollmentNumber, '') = ''
+                OR LOWER(enrollment.enrollmentNumber)
+                    LIKE LOWER(
+                        CONCAT(
+                            '%',
+                            COALESCE(:enrollmentNumber, ''),
+                            '%'
+                        )
+                    )
+            )
+            """)
+    Page<Enrollment> search(
+            @Param("enrollmentNumber")
+            String enrollmentNumber,
+
+            @Param("studentId")
+            UUID studentId,
+
+            @Param("batchId")
+            UUID batchId,
+
+            @Param("status")
+            EnrollmentStatus status,
+
             Pageable pageable
     );
 }

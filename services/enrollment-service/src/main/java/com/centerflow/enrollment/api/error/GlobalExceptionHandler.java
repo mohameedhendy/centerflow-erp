@@ -3,6 +3,7 @@ package com.centerflow.enrollment.api.error;
 import com.centerflow.enrollment.domain.InvalidEnrollmentStatusTransitionException;
 import com.centerflow.enrollment.exception.EnrollmentConflictException;
 import com.centerflow.enrollment.exception.EnrollmentNotFoundException;
+import com.centerflow.enrollment.exception.InvalidPaginationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -57,6 +59,37 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.CONFLICT,
                 exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(InvalidPaginationException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidPagination(
+            InvalidPaginationException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(
+            MethodArgumentTypeMismatchException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid value for parameter: "
+                        + exception.getName(),
                 Map.of(),
                 request.getRequestURI()
         );
