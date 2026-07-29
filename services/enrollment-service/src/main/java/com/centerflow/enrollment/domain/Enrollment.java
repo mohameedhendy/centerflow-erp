@@ -133,6 +133,32 @@ public class Enrollment {
         changeStatus(EnrollmentStatus.CANCELLED);
     }
 
+    public void ensureTransferAllowed(UUID targetBatchId) {
+        Objects.requireNonNull(
+                targetBatchId,
+                "Target batch ID is required"
+        );
+
+        if (status != EnrollmentStatus.ACTIVE) {
+            throw new InvalidEnrollmentTransferException(
+                    "Only active enrollment can be transferred"
+            );
+        }
+
+        if (batchId.equals(targetBatchId)) {
+            throw new InvalidEnrollmentTransferException(
+                    "Enrollment is already assigned to the target batch"
+            );
+        }
+    }
+
+    public void transferTo(UUID targetBatchId) {
+        ensureTransferAllowed(targetBatchId);
+
+        batchId = targetBatchId;
+        updatedAt = Instant.now();
+    }
+
     private void changeStatus(
             EnrollmentStatus newStatus
     ) {

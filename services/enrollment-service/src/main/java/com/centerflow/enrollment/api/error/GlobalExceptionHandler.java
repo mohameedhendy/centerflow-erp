@@ -12,7 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
+import com.centerflow.enrollment.domain.InvalidEnrollmentTransferException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -140,5 +140,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+
+    @ExceptionHandler(InvalidEnrollmentTransferException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidEnrollmentTransfer(
+            InvalidEnrollmentTransferException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
     }
 }

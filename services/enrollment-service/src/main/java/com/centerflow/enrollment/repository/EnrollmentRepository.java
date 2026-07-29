@@ -7,7 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,5 +87,23 @@ public interface EnrollmentRepository
             EnrollmentStatus status,
 
             Pageable pageable
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT enrollment
+        FROM Enrollment enrollment
+        WHERE enrollment.id = :enrollmentId
+        """)
+    Optional<Enrollment> findByIdForUpdate(
+            @Param("enrollmentId")
+            UUID enrollmentId
+    );
+
+    boolean existsByStudentIdAndBatchIdAndStatusInAndIdNot(
+            UUID studentId,
+            UUID batchId,
+            Collection<EnrollmentStatus> statuses,
+            UUID enrollmentId
     );
 }
