@@ -20,19 +20,15 @@ public class GatewaySecurityConfiguration {
                 .csrf(
                         ServerHttpSecurity.CsrfSpec::disable
                 )
-
                 .formLogin(
                         ServerHttpSecurity.FormLoginSpec::disable
                 )
-
                 .httpBasic(
                         ServerHttpSecurity.HttpBasicSpec::disable
                 )
-
                 .logout(
                         ServerHttpSecurity.LogoutSpec::disable
                 )
-
                 .authorizeExchange(authorize ->
                         authorize
                                 .pathMatchers(
@@ -54,19 +50,20 @@ public class GatewaySecurityConfiguration {
                                 .permitAll()
 
                                 .pathMatchers(
-                                        "/api/v1/academic/internal/**"
+                                        "/api/v1/academic/internal/**",
+                                        "/api/v1/enrollments/internal/**"
                                 )
                                 .denyAll()
 
                                 .pathMatchers(
-                                        "/api/v1/academic/**"
+                                        "/api/v1/academic/**",
+                                        "/api/v1/enrollments/**"
                                 )
                                 .authenticated()
 
                                 .anyExchange()
                                 .authenticated()
                 )
-
                 .oauth2ResourceServer(resourceServer ->
                         resourceServer.jwt(
                                 Customizer.withDefaults()
