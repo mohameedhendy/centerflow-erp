@@ -1,5 +1,6 @@
 package com.centerflow.enrollment.api.error;
 
+import com.centerflow.enrollment.domain.InvalidEnrollmentStatusTransitionException;
 import com.centerflow.enrollment.exception.EnrollmentConflictException;
 import com.centerflow.enrollment.exception.EnrollmentNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse>
     handleEnrollmentConflict(
             EnrollmentConflictException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(
+            InvalidEnrollmentStatusTransitionException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidStatusTransition(
+            InvalidEnrollmentStatusTransitionException exception,
             HttpServletRequest request
     ) {
         return buildResponse(

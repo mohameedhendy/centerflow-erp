@@ -56,4 +56,54 @@ public class EnrollmentController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/internal/{enrollmentId}/activate")
+    public ResponseEntity<EnrollmentResponse> activateEnrollment(
+            @PathVariable UUID enrollmentId
+    ) {
+        EnrollmentResponse response =
+                enrollmentService.activateEnrollment(enrollmentId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{enrollmentId}/suspend")
+    public ResponseEntity<EnrollmentResponse> suspendEnrollment(
+            @PathVariable UUID enrollmentId
+    ) {
+        EnrollmentResponse response =
+                enrollmentService.suspendEnrollment(enrollmentId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{enrollmentId}/resume")
+    public ResponseEntity<EnrollmentResponse> resumeEnrollment(
+            @PathVariable UUID enrollmentId
+    ) {
+        EnrollmentResponse response =
+                enrollmentService.resumeEnrollment(enrollmentId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{enrollmentId}/complete")
+    public ResponseEntity<EnrollmentResponse> completeEnrollment(
+            @PathVariable UUID enrollmentId
+    ) {
+        EnrollmentResponse response =
+                enrollmentService.completeEnrollment(enrollmentId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{enrollmentId}/cancel")
+    public ResponseEntity<EnrollmentResponse> cancelEnrollment(
+            @PathVariable UUID enrollmentId
+    ) {
+        EnrollmentResponse response =
+                enrollmentService.cancelEnrollment(enrollmentId);
+
+        return ResponseEntity.ok(response);
+    }
 }

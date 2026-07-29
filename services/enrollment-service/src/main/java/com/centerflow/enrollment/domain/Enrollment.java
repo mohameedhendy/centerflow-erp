@@ -90,10 +90,7 @@ public class Enrollment {
     }
 
     public void activate() {
-        if (
-                status != EnrollmentStatus.PENDING_PAYMENT
-                        && status != EnrollmentStatus.SUSPENDED
-        ) {
+        if (status != EnrollmentStatus.PENDING_PAYMENT) {
             throw invalidTransition(EnrollmentStatus.ACTIVE);
         }
 
@@ -106,6 +103,14 @@ public class Enrollment {
         }
 
         changeStatus(EnrollmentStatus.SUSPENDED);
+    }
+
+    public void resume() {
+        if (status != EnrollmentStatus.SUSPENDED) {
+            throw invalidTransition(EnrollmentStatus.ACTIVE);
+        }
+
+        changeStatus(EnrollmentStatus.ACTIVE);
     }
 
     public void complete() {
@@ -128,19 +133,20 @@ public class Enrollment {
         changeStatus(EnrollmentStatus.CANCELLED);
     }
 
-    private void changeStatus(EnrollmentStatus newStatus) {
+    private void changeStatus(
+            EnrollmentStatus newStatus
+    ) {
         status = newStatus;
         updatedAt = Instant.now();
     }
 
-    private IllegalStateException invalidTransition(
-            EnrollmentStatus newStatus
+    private InvalidEnrollmentStatusTransitionException
+    invalidTransition(
+            EnrollmentStatus targetStatus
     ) {
-        return new IllegalStateException(
-                "Enrollment status cannot change from "
-                        + status
-                        + " to "
-                        + newStatus
+        return new InvalidEnrollmentStatusTransitionException(
+                status,
+                targetStatus
         );
     }
 

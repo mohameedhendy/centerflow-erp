@@ -64,15 +64,81 @@ public class EnrollmentService {
     public EnrollmentResponse getEnrollment(
             UUID enrollmentId
     ) {
-        Enrollment enrollment = enrollmentRepository
+        return EnrollmentResponse.from(
+                getRequiredEnrollment(enrollmentId)
+        );
+    }
+
+    @Transactional
+    public EnrollmentResponse activateEnrollment(
+            UUID enrollmentId
+    ) {
+        Enrollment enrollment =
+                getRequiredEnrollment(enrollmentId);
+
+        enrollment.activate();
+
+        return EnrollmentResponse.from(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentResponse suspendEnrollment(
+            UUID enrollmentId
+    ) {
+        Enrollment enrollment =
+                getRequiredEnrollment(enrollmentId);
+
+        enrollment.suspend();
+
+        return EnrollmentResponse.from(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentResponse resumeEnrollment(
+            UUID enrollmentId
+    ) {
+        Enrollment enrollment =
+                getRequiredEnrollment(enrollmentId);
+
+        enrollment.resume();
+
+        return EnrollmentResponse.from(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentResponse completeEnrollment(
+            UUID enrollmentId
+    ) {
+        Enrollment enrollment =
+                getRequiredEnrollment(enrollmentId);
+
+        enrollment.complete();
+
+        return EnrollmentResponse.from(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentResponse cancelEnrollment(
+            UUID enrollmentId
+    ) {
+        Enrollment enrollment =
+                getRequiredEnrollment(enrollmentId);
+
+        enrollment.cancel();
+
+        return EnrollmentResponse.from(enrollment);
+    }
+
+    private Enrollment getRequiredEnrollment(
+            UUID enrollmentId
+    ) {
+        return enrollmentRepository
                 .findById(enrollmentId)
                 .orElseThrow(
                         () -> new EnrollmentNotFoundException(
                                 enrollmentId
                         )
                 );
-
-        return EnrollmentResponse.from(enrollment);
     }
 
     private void validateNoOpenEnrollment(

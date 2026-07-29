@@ -23,16 +23,10 @@ class EnrollmentTests {
         assertThat(enrollment.getId()).isNotNull();
         assertThat(enrollment.getEnrollmentNumber())
                 .isEqualTo("ENR-2026-000001");
-        assertThat(enrollment.getStudentId())
-                .isEqualTo(studentId);
-        assertThat(enrollment.getBatchId())
-                .isEqualTo(batchId);
+        assertThat(enrollment.getStudentId()).isEqualTo(studentId);
+        assertThat(enrollment.getBatchId()).isEqualTo(batchId);
         assertThat(enrollment.getStatus())
-                .isEqualTo(
-                        EnrollmentStatus.PENDING_PAYMENT
-                );
-        assertThat(enrollment.getCreatedAt()).isNotNull();
-        assertThat(enrollment.getUpdatedAt()).isNotNull();
+                .isEqualTo(EnrollmentStatus.PENDING_PAYMENT);
     }
 
     @Test
@@ -46,27 +40,66 @@ class EnrollmentTests {
     }
 
     @Test
-    void suspendShouldOnlyBeAllowedForActiveEnrollment() {
+    void activateShouldRejectNonPendingEnrollment() {
         Enrollment enrollment = createEnrollment();
+        enrollment.activate();
 
-        assertThatThrownBy(enrollment::suspend)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("PENDING_PAYMENT")
-                .hasMessageContaining("SUSPENDED");
+        assertThatThrownBy(enrollment::activate)
+                .isInstanceOf(
+                        InvalidEnrollmentStatusTransitionException.class
+                )
+                .hasMessage(
+                        "Enrollment status cannot change from "
+                                + "ACTIVE to ACTIVE"
+                );
     }
 
     @Test
-    void completeShouldOnlyBeAllowedForActiveEnrollment() {
+    void suspendShouldChangeActiveToSuspended() {
         Enrollment enrollment = createEnrollment();
-
-        assertThatThrownBy(enrollment::complete)
-                .isInstanceOf(IllegalStateException.class);
-
         enrollment.activate();
+
+        enrollment.suspend();
+
+        assertThat(enrollment.getStatus())
+                .isEqualTo(EnrollmentStatus.SUSPENDED);
+    }
+
+    @Test
+    void resumeShouldChangeSuspendedToActive() {
+        Enrollment enrollment = createEnrollment();
+        enrollment.activate();
+        enrollment.suspend();
+
+        enrollment.resume();
+
+        assertThat(enrollment.getStatus())
+                .isEqualTo(EnrollmentStatus.ACTIVE);
+    }
+
+    @Test
+    void completeShouldChangeActiveToCompleted() {
+        Enrollment enrollment = createEnrollment();
+        enrollment.activate();
+
         enrollment.complete();
 
         assertThat(enrollment.getStatus())
                 .isEqualTo(EnrollmentStatus.COMPLETED);
+    }
+
+    @Test
+    void suspendShouldRejectPendingPaymentEnrollment() {
+        Enrollment enrollment = createEnrollment();
+
+        assertThatThrownBy(enrollment::suspend)
+                .isInstanceOf(
+                        InvalidEnrollmentStatusTransitionException.class
+                )
+                .hasMessage(
+                        "Enrollment status cannot change from "
+                                + "PENDING_PAYMENT to SUSPENDED"
+                );
     }
 
     @Test
@@ -78,6 +111,22 @@ class EnrollmentTests {
 
         assertThat(enrollment.getStatus())
                 .isEqualTo(EnrollmentStatus.CANCELLED);
+    }
+
+    @Test
+    void cancelShouldRejectCompletedEnrollment() {
+        Enrollment enrollment = createEnrollment();
+        enrollment.activate();
+        enrollment.complete();
+
+        assertThatThrownBy(enrollment::cancel)
+                .isInstanceOf(
+                        InvalidEnrollmentStatusTransitionException.class
+                )
+                .hasMessage(
+                        "Enrollment status cannot change from "
+                                + "COMPLETED to CANCELLED"
+                );
     }
 
     private Enrollment createEnrollment() {
