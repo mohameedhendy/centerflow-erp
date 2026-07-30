@@ -16,22 +16,26 @@ class FinanceDatabaseMigrationTests {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void flywayShouldCreatePricingPlansTable() {
+    void flywayShouldCreateFinanceTables() {
         Integer tableCount = jdbcTemplate.queryForObject(
                 """
                 SELECT COUNT(*)
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
-                  AND table_name = 'pricing_plans'
+                  AND table_name IN (
+                      'pricing_plans',
+                      'enrollment_financial_accounts',
+                      'installments'
+                  )
                 """,
                 Integer.class
         );
 
-        assertThat(tableCount).isEqualTo(1);
+        assertThat(tableCount).isEqualTo(3);
     }
 
     @Test
-    void flywayShouldApplyVersionOneMigration() {
+    void flywayShouldApplyLatestMigration() {
         String version = jdbcTemplate.queryForObject(
                 """
                 SELECT version
@@ -43,6 +47,6 @@ class FinanceDatabaseMigrationTests {
                 String.class
         );
 
-        assertThat(version).isEqualTo("1");
+        assertThat(version).isEqualTo("2");
     }
 }

@@ -1,5 +1,7 @@
 package com.centerflow.finance.common.api.error;
 
+import com.centerflow.finance.account.exception.EnrollmentFinancialAccountConflictException;
+import com.centerflow.finance.account.exception.EnrollmentFinancialAccountNotFoundException;
 import com.centerflow.finance.common.exception.InvalidPaginationException;
 import com.centerflow.finance.pricing.domain.InvalidPricingPlanException;
 import com.centerflow.finance.pricing.exception.PricingPlanConflictException;
@@ -38,6 +40,38 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse>
     handlePricingPlanConflict(
             PricingPlanConflictException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(
+            EnrollmentFinancialAccountNotFoundException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleFinancialAccountNotFound(
+            EnrollmentFinancialAccountNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                Map.of(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(
+            EnrollmentFinancialAccountConflictException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleFinancialAccountConflict(
+            EnrollmentFinancialAccountConflictException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
