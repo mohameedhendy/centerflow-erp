@@ -189,7 +189,7 @@ public class PricingPlan {
         String normalized = description.trim();
 
         if (normalized.length() > MAX_DESCRIPTION_LENGTH) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Pricing plan description must not exceed "
                             + MAX_DESCRIPTION_LENGTH
                             + " characters"
@@ -205,7 +205,7 @@ public class PricingPlan {
             int maxLength
     ) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     fieldName + " is required"
             );
         }
@@ -213,7 +213,7 @@ public class PricingPlan {
         String normalized = value.trim();
 
         if (normalized.length() > maxLength) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     fieldName
                             + " must not exceed "
                             + maxLength
@@ -233,7 +233,7 @@ public class PricingPlan {
         );
 
         if (normalized.signum() <= 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Total amount must be greater than zero"
             );
         }
@@ -251,13 +251,13 @@ public class PricingPlan {
         );
 
         if (normalized.signum() < 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Initial payment amount cannot be negative"
             );
         }
 
         if (normalized.compareTo(totalAmount) > 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Initial payment amount cannot exceed total amount"
             );
         }
@@ -270,7 +270,7 @@ public class PricingPlan {
             String fieldName
     ) {
         if (amount == null) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     fieldName + " is required"
             );
         }
@@ -281,7 +281,7 @@ public class PricingPlan {
                     RoundingMode.UNNECESSARY
             );
         } catch (ArithmeticException exception) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     fieldName
                             + " must have no more than "
                             + "two decimal places"
@@ -293,7 +293,7 @@ public class PricingPlan {
             String currency
     ) {
         if (currency == null || currency.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Currency is required"
             );
         }
@@ -303,7 +303,7 @@ public class PricingPlan {
                 .toUpperCase(Locale.ROOT);
 
         if (!normalized.matches("[A-Z]{3}")) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Currency must contain exactly three letters"
             );
         }
@@ -318,7 +318,7 @@ public class PricingPlan {
                 installmentCount < 1
                         || installmentCount > MAX_INSTALLMENT_COUNT
         ) {
-            throw new IllegalArgumentException(
+            throw new InvalidPricingPlanException(
                     "Installment count must be between 1 and "
                             + MAX_INSTALLMENT_COUNT
             );
