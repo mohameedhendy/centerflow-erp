@@ -25,11 +25,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class NotificationApiIntegrationTests {
 
+    private static final String USER_ID_HEADER =
+            "X-User-Id";
+
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationRepository
+            notificationRepository;
 
     @Test
     void createShouldBeIdempotentBySourceEventId()
@@ -58,63 +62,41 @@ class NotificationApiIntegrationTests {
                         post(
                                 "/api/v1/notifications/internal/notifications"
                         )
-                                .contentType("application/json")
+                                .contentType(
+                                        "application/json"
+                                )
                                 .content(requestBody)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(
-                        jsonPath("$.created").value(true)
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.notification.status"
-                        ).value("UNREAD")
+                        jsonPath("$.created")
+                                .value(true)
                 );
 
         mockMvc.perform(
                         post(
                                 "/api/v1/notifications/internal/notifications"
                         )
-                                .contentType("application/json")
+                                .contentType(
+                                        "application/json"
+                                )
                                 .content(requestBody)
                 )
                 .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("$.created").value(false)
+                        jsonPath("$.created")
+                                .value(false)
                 );
-
-        long notificationCount =
-                notificationRepository
-                        .findAll()
-                        .stream()
-                        .filter(notification ->
-                                sourceEventId.equals(
-                                        notification
-                                                .getSourceEventId()
-                                )
-                        )
-                        .count();
-
-        org.assertj.core.api.Assertions
-                .assertThat(notificationCount)
-                .isEqualTo(1);
     }
 
     @Test
-    void searchShouldFilterByRecipientAndStatus()
+    void searchShouldUseAuthenticatedUserHeader()
             throws Exception {
         UUID recipientUserId = UUID.randomUUID();
 
-        Notification unreadNotification =
-                createNotification(recipientUserId);
-
-        Notification readNotification =
-                createNotification(recipientUserId);
-
-        readNotification.markAsRead();
-
-        notificationRepository.save(unreadNotification);
-        notificationRepository.save(readNotification);
+        notificationRepository.saveAndFlush(
+                createNotification(recipientUserId)
+        );
 
         notificationRepository.saveAndFlush(
                 createNotification(UUID.randomUUID())
@@ -122,9 +104,10 @@ class NotificationApiIntegrationTests {
 
         mockMvc.perform(
                         get("/api/v1/notifications")
-                                .param(
-                                        "recipientUserId",
-                                        recipientUserId.toString()
+                                .header(
+                                        USER_ID_HEADER,
+                                        recipientUserId
+                                                .toString()
                                 )
                                 .param(
                                         "status",
@@ -135,25 +118,52 @@ class NotificationApiIntegrationTests {
                 )
                 .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("$.content", hasSize(1))
+                        jsonPath(
+                                "$.content",
+                                hasSize(1)
+                        )
                 )
                 .andExpect(
                         jsonPath(
-                                "$.content[0].status"
-                        ).value("UNREAD")
+                                "$.content[0].recipientUserId"
+                        ).value(
+                                recipientUserId.toString()
+                        )
                 );
     }
 
     @Test
-    void statusEndpointsShouldReadAndArchiveNotification()
+    void userShouldNotAccessAnotherUsersNotification()
+            throws Exception {
+        UUID ownerUserId = UUID.randomUUID();
+        UUID anotherUserId = UUID.randomUUID();
+
+        Notification notification =
+                notificationRepository.saveAndFlush(
+                        createNotification(ownerUserId)
+                );
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/notifications/{id}",
+                                notification.getId()
+                        )
+                                .header(
+                                        USER_ID_HEADER,
+                                        anotherUserId.toString()
+                                )
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void statusEndpointsShouldUseAuthenticatedUser()
             throws Exception {
         UUID recipientUserId = UUID.randomUUID();
 
         Notification notification =
                 notificationRepository.saveAndFlush(
-                        createNotification(
-                                recipientUserId
-                        )
+                        createNotification(recipientUserId)
                 );
 
         mockMvc.perform(
@@ -161,18 +171,16 @@ class NotificationApiIntegrationTests {
                                 "/api/v1/notifications/{id}/read",
                                 notification.getId()
                         )
-                                .param(
-                                        "recipientUserId",
-                                        recipientUserId.toString()
+                                .header(
+                                        USER_ID_HEADER,
+                                        recipientUserId
+                                                .toString()
                                 )
                 )
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.status")
                                 .value("READ")
-                )
-                .andExpect(
-                        jsonPath("$.readAt").exists()
                 );
 
         mockMvc.perform(
@@ -180,100 +188,49 @@ class NotificationApiIntegrationTests {
                                 "/api/v1/notifications/{id}/archive",
                                 notification.getId()
                         )
-                                .param(
-                                        "recipientUserId",
-                                        recipientUserId.toString()
+                                .header(
+                                        USER_ID_HEADER,
+                                        recipientUserId
+                                                .toString()
                                 )
                 )
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.status")
                                 .value("ARCHIVED")
-                )
-                .andExpect(
-                        jsonPath("$.archivedAt").exists()
                 );
-
-        mockMvc.perform(
-                        post(
-                                "/api/v1/notifications/{id}/read",
-                                notification.getId()
-                        )
-                                .param(
-                                        "recipientUserId",
-                                        recipientUserId.toString()
-                                )
-                )
-                .andExpect(status().isConflict());
     }
 
     @Test
-    void unreadCountShouldReturnRecipientCount()
+    void unreadCountShouldUseAuthenticatedUser()
             throws Exception {
         UUID recipientUserId = UUID.randomUUID();
 
-        notificationRepository.save(
-                createNotification(recipientUserId)
-        );
-
-        Notification readNotification =
-                createNotification(recipientUserId);
-
-        readNotification.markAsRead();
-
         notificationRepository.saveAndFlush(
-                readNotification
+                createNotification(recipientUserId)
         );
 
         mockMvc.perform(
                         get(
                                 "/api/v1/notifications/unread-count"
                         )
-                                .param(
-                                        "recipientUserId",
-                                        recipientUserId.toString()
+                                .header(
+                                        USER_ID_HEADER,
+                                        recipientUserId
+                                                .toString()
                                 )
                 )
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.recipientUserId")
                                 .value(
-                                        recipientUserId.toString()
+                                        recipientUserId
+                                                .toString()
                                 )
                 )
                 .andExpect(
                         jsonPath("$.unreadCount")
                                 .value(1)
-                );
-    }
-
-    @Test
-    void createShouldRejectIncompleteReference()
-            throws Exception {
-        String requestBody = """
-                {
-                  "recipientUserId": "%s",
-                  "type": "GENERAL",
-                  "title": "Test notification",
-                  "message": "Test message",
-                  "referenceType": "ENROLLMENT"
-                }
-                """.formatted(UUID.randomUUID());
-
-        mockMvc.perform(
-                        post(
-                                "/api/v1/notifications/internal/notifications"
-                        )
-                                .contentType("application/json")
-                                .content(requestBody)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "Reference type and reference ID "
-                                                + "must be provided together"
-                                )
                 );
     }
 

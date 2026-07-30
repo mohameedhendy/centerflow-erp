@@ -32,6 +32,10 @@ public class GatewaySecurityConfiguration {
                 .authorizeExchange(authorize ->
                         authorize
                                 .pathMatchers(
+                                        "/api/v1/notifications/internal/**"
+                                )
+                                .denyAll()
+                                .pathMatchers(
                                         "/api/v1/finance/internal/**"
                                 )
                                 .denyAll()

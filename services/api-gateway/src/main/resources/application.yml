@@ -26,6 +26,10 @@ spring:
               uri: "${FINANCE_SERVICE_URL:http://localhost:8084}"
               predicates:
                 - Path=/api/v1/finance/**
+            - id: notification-service
+              uri: "${NOTIFICATION_SERVICE_URL:http://localhost:8085}"
+              predicates:
+                - Path=/api/v1/notifications/**
 security:
   jwt:
     issuer: "${JWT_ISSUER:centerflow-identity}"

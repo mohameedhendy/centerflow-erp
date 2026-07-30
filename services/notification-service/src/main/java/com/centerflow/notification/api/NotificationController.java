@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
+
+    private static final String USER_ID_HEADER =
+            "X-User-Id";
 
     private final NotificationApplicationService
             notificationService;
@@ -61,7 +65,7 @@ public class NotificationController {
     public ResponseEntity<
             PageResponse<NotificationResponse>
             > searchNotifications(
-            @RequestParam
+            @RequestHeader(USER_ID_HEADER)
             UUID recipientUserId,
 
             @RequestParam(required = false)
@@ -99,7 +103,7 @@ public class NotificationController {
     public ResponseEntity<
             UnreadNotificationCountResponse
             > getUnreadCount(
-            @RequestParam
+            @RequestHeader(USER_ID_HEADER)
             UUID recipientUserId
     ) {
         return ResponseEntity.ok(
@@ -115,7 +119,7 @@ public class NotificationController {
             @PathVariable
             UUID notificationId,
 
-            @RequestParam
+            @RequestHeader(USER_ID_HEADER)
             UUID recipientUserId
     ) {
         return ResponseEntity.ok(
@@ -132,7 +136,7 @@ public class NotificationController {
             @PathVariable
             UUID notificationId,
 
-            @RequestParam
+            @RequestHeader(USER_ID_HEADER)
             UUID recipientUserId
     ) {
         return ResponseEntity.ok(
@@ -149,7 +153,7 @@ public class NotificationController {
             @PathVariable
             UUID notificationId,
 
-            @RequestParam
+            @RequestHeader(USER_ID_HEADER)
             UUID recipientUserId
     ) {
         return ResponseEntity.ok(
