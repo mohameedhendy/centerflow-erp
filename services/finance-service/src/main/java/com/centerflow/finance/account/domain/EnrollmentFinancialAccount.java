@@ -52,6 +52,14 @@ public class EnrollmentFinancialAccount {
     private BigDecimal totalAmount;
 
     @Column(
+            name = "paid_amount",
+            nullable = false,
+            precision = 19,
+            scale = 2
+    )
+    private BigDecimal paidAmount;
+
+    @Column(
             name = "currency",
             nullable = false,
             length = 3
@@ -93,6 +101,7 @@ public class EnrollmentFinancialAccount {
             UUID pricingPlanId,
             String pricingPlanCode,
             BigDecimal totalAmount,
+            BigDecimal paidAmount,
             String currency,
             int installmentCount,
             BigDecimal initialPaymentAmount,
@@ -110,6 +119,10 @@ public class EnrollmentFinancialAccount {
                 normalizeRequiredText(pricingPlanCode);
         this.totalAmount =
                 normalizePositiveMoney(totalAmount);
+        this.paidAmount = normalizeMoney(
+                paidAmount,
+                "Paid amount"
+        );
         this.currency = normalizeCurrency(currency);
         this.installmentCount =
                 validateInstallmentCount(installmentCount);
@@ -142,6 +155,7 @@ public class EnrollmentFinancialAccount {
                 pricingPlanId,
                 pricingPlanCode,
                 totalAmount,
+                new BigDecimal("0.00"),
                 currency,
                 installmentCount,
                 initialPaymentAmount,
@@ -149,6 +163,55 @@ public class EnrollmentFinancialAccount {
                 now,
                 now
         );
+    }
+
+    public void recordPayment(BigDecimal paymentAmount) {
+        BigDecimal normalizedPayment = normalizeMoney(
+                paymentAmount,
+                "Payment amount"
+        );
+
+        if (normalizedPayment.signum() <= 0) {
+            throw new InvalidFinancialAccountPaymentException(
+                    "Payment amount must be greater than zero"
+            );
+        }
+
+        if (status != FinancialAccountStatus.OPEN) {
+            throw new InvalidFinancialAccountPaymentException(
+                    "Payment cannot be recorded for "
+                            + status
+                            + " financial account"
+            );
+        }
+
+        if (
+                normalizedPayment.compareTo(
+                        getRemainingAmount()
+                ) > 0
+        ) {
+            throw new InvalidFinancialAccountPaymentException(
+                    "Payment amount exceeds remaining balance"
+            );
+        }
+
+        paidAmount = paidAmount.add(normalizedPayment);
+
+        if (paidAmount.compareTo(totalAmount) == 0) {
+            status = FinancialAccountStatus.SETTLED;
+        }
+
+        updatedAt = Instant.now();
+    }
+
+    public BigDecimal getRemainingAmount() {
+        return totalAmount.subtract(paidAmount);
+    }
+
+    public boolean isInitialPaymentSatisfied() {
+        return paidAmount.compareTo(
+                initialPaymentAmount
+        ) >= 0;
     }
 
     private static String normalizeRequiredText(
@@ -286,6 +349,14 @@ public class EnrollmentFinancialAccount {
 
     public BigDecimal getTotalAmount() {
         return totalAmount;
+    }
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount;
+    }
+
+    public BigDecimal getRemainingAmountValue() {
+        return getRemainingAmount();
     }
 
     public String getCurrency() {

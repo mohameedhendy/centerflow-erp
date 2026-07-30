@@ -25,13 +25,15 @@ class FinanceDatabaseMigrationTests {
                   AND table_name IN (
                       'pricing_plans',
                       'enrollment_financial_accounts',
-                      'installments'
+                      'installments',
+                      'payments',
+                      'payment_allocations'
                   )
                 """,
                 Integer.class
         );
 
-        assertThat(tableCount).isEqualTo(3);
+        assertThat(tableCount).isEqualTo(5);
     }
 
     @Test
@@ -47,6 +49,6 @@ class FinanceDatabaseMigrationTests {
                 String.class
         );
 
-        assertThat(version).isEqualTo("2");
+        assertThat(version).isEqualTo("3");
     }
 }

@@ -119,6 +119,51 @@ public class Installment {
         );
     }
 
+    public void allocatePayment(
+            BigDecimal allocationAmount
+    ) {
+        BigDecimal normalized =
+                normalizePositiveMoney(allocationAmount);
+
+        if (
+                status == InstallmentStatus.PAID
+                        || status
+                        == InstallmentStatus.CANCELLED
+        ) {
+            throw new InvalidFinancialAccountPaymentException(
+                    "Payment cannot be allocated to "
+                            + status
+                            + " installment"
+            );
+        }
+
+        if (
+                normalized.compareTo(
+                        getRemainingAmount()
+                ) > 0
+        ) {
+            throw new InvalidFinancialAccountPaymentException(
+                    "Payment allocation exceeds "
+                            + "installment remaining amount"
+            );
+        }
+
+        paidAmount = paidAmount.add(normalized);
+
+        if (paidAmount.compareTo(amount) == 0) {
+            status = InstallmentStatus.PAID;
+        }
+        else {
+            status = InstallmentStatus.PARTIALLY_PAID;
+        }
+
+        updatedAt = Instant.now();
+    }
+
+    public BigDecimal getRemainingAmount() {
+        return amount.subtract(paidAmount);
+    }
+
     private static BigDecimal normalizePositiveMoney(
             BigDecimal value
     ) {
@@ -173,6 +218,10 @@ public class Installment {
 
     public BigDecimal getPaidAmount() {
         return paidAmount;
+    }
+
+    public BigDecimal getRemainingAmountValue() {
+        return getRemainingAmount();
     }
 
     public InstallmentStatus getStatus() {

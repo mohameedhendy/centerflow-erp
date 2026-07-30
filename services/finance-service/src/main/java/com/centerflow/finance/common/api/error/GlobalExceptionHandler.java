@@ -1,8 +1,11 @@
 package com.centerflow.finance.common.api.error;
 
+import com.centerflow.finance.account.domain.InvalidFinancialAccountPaymentException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountConflictException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountNotFoundException;
 import com.centerflow.finance.common.exception.InvalidPaginationException;
+import com.centerflow.finance.payment.exception.PaymentConflictException;
+import com.centerflow.finance.payment.exception.PaymentNotFoundException;
 import com.centerflow.finance.pricing.domain.InvalidPricingPlanException;
 import com.centerflow.finance.pricing.exception.PricingPlanConflictException;
 import com.centerflow.finance.pricing.exception.PricingPlanNotFoundException;
@@ -22,24 +25,16 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(PricingPlanNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse>
-    handlePricingPlanNotFound(
-            PricingPlanNotFoundException exception,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.NOT_FOUND,
-                exception.getMessage(),
-                Map.of(),
-                request.getRequestURI()
-        );
-    }
-
-    @ExceptionHandler(PricingPlanConflictException.class)
-    public ResponseEntity<ApiErrorResponse>
-    handlePricingPlanConflict(
-            PricingPlanConflictException exception,
+    @ExceptionHandler(
+            {
+                    PricingPlanConflictException.class,
+                    EnrollmentFinancialAccountConflictException.class,
+                    PaymentConflictException.class,
+                    InvalidFinancialAccountPaymentException.class
+            }
+    )
+    public ResponseEntity<ApiErrorResponse> handleConflict(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
@@ -51,31 +46,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(
-            EnrollmentFinancialAccountNotFoundException.class
+            {
+                    PricingPlanNotFoundException.class,
+                    EnrollmentFinancialAccountNotFoundException.class,
+                    PaymentNotFoundException.class
+            }
     )
-    public ResponseEntity<ApiErrorResponse>
-    handleFinancialAccountNotFound(
-            EnrollmentFinancialAccountNotFoundException exception,
+    public ResponseEntity<ApiErrorResponse> handleNotFound(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
                 HttpStatus.NOT_FOUND,
-                exception.getMessage(),
-                Map.of(),
-                request.getRequestURI()
-        );
-    }
-
-    @ExceptionHandler(
-            EnrollmentFinancialAccountConflictException.class
-    )
-    public ResponseEntity<ApiErrorResponse>
-    handleFinancialAccountConflict(
-            EnrollmentFinancialAccountConflictException exception,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.CONFLICT,
                 exception.getMessage(),
                 Map.of(),
                 request.getRequestURI()
