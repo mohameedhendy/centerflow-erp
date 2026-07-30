@@ -45,3 +45,7 @@ centerflow:
     notification:
       enabled: "${NOTIFICATION_INTEGRATION_ENABLED:true}"
       base-url: "${NOTIFICATION_SERVICE_URL:http://localhost:8085}"
+
+    enrollment:
+      enabled: "${ENROLLMENT_ACTIVATION_INTEGRATION_ENABLED:true}"
+      base-url: "${ENROLLMENT_SERVICE_URL:http://localhost:8083}"

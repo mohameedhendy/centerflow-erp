@@ -77,7 +77,8 @@ public class EnrollmentService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<EnrollmentResponse> searchEnrollments(
+    public PageResponse<EnrollmentResponse>
+    searchEnrollments(
             String enrollmentNumber,
             UUID studentId,
             UUID batchId,
@@ -118,7 +119,21 @@ public class EnrollmentService {
             UUID enrollmentId
     ) {
         Enrollment enrollment =
-                getRequiredEnrollment(enrollmentId);
+                enrollmentRepository
+                        .findByIdForUpdate(enrollmentId)
+                        .orElseThrow(
+                                () ->
+                                        new EnrollmentNotFoundException(
+                                                enrollmentId
+                                        )
+                        );
+
+        if (
+                enrollment.getStatus()
+                        == EnrollmentStatus.ACTIVE
+        ) {
+            return EnrollmentResponse.from(enrollment);
+        }
 
         enrollment.activate();
 
@@ -226,7 +241,10 @@ public class EnrollmentService {
     private String normalizeSearchText(
             String searchText
     ) {
-        if (searchText == null || searchText.isBlank()) {
+        if (
+                searchText == null
+                        || searchText.isBlank()
+        ) {
             return null;
         }
 

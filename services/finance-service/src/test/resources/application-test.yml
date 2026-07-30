@@ -27,3 +27,7 @@ centerflow:
     notification:
       enabled: false
       base-url: http://localhost:8085
+
+    enrollment:
+      enabled: false
+      base-url: http://localhost:8083

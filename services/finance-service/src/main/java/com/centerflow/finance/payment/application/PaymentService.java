@@ -6,6 +6,10 @@ import com.centerflow.finance.account.domain.InstallmentStatus;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountNotFoundException;
 import com.centerflow.finance.account.repository.EnrollmentFinancialAccountRepository;
 import com.centerflow.finance.account.repository.InstallmentRepository;
+import com.centerflow.finance.integration.enrollment.EnrollmentActivationRequested;
+import com.centerflow.finance.integration.enrollment.EnrollmentActivationTask;
+import com.centerflow.finance.integration.enrollment.EnrollmentActivationTaskRepository;
+import com.centerflow.finance.integration.notification.FinanceNotificationEvent;
 import com.centerflow.finance.payment.api.dto.PaymentResponse;
 import com.centerflow.finance.payment.api.dto.RecordPaymentRequest;
 import com.centerflow.finance.payment.domain.Payment;
@@ -15,7 +19,6 @@ import com.centerflow.finance.payment.exception.PaymentNotFoundException;
 import com.centerflow.finance.payment.number.PaymentNumberGenerator;
 import com.centerflow.finance.payment.repository.PaymentAllocationRepository;
 import com.centerflow.finance.payment.repository.PaymentRepository;
-import com.centerflow.finance.integration.notification.FinanceNotificationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +37,15 @@ public class PaymentService {
 
     private final InstallmentRepository installmentRepository;
     private final PaymentRepository paymentRepository;
+
     private final PaymentAllocationRepository
             paymentAllocationRepository;
 
     private final PaymentNumberGenerator
             paymentNumberGenerator;
+
+    private final EnrollmentActivationTaskRepository
+            activationTaskRepository;
 
     private final ApplicationEventPublisher
             applicationEventPublisher;
@@ -51,7 +58,10 @@ public class PaymentService {
             PaymentAllocationRepository
                     paymentAllocationRepository,
             PaymentNumberGenerator paymentNumberGenerator,
-            ApplicationEventPublisher applicationEventPublisher
+            EnrollmentActivationTaskRepository
+                    activationTaskRepository,
+            ApplicationEventPublisher
+                    applicationEventPublisher
     ) {
         this.financialAccountRepository =
                 financialAccountRepository;
@@ -61,7 +71,8 @@ public class PaymentService {
                 paymentAllocationRepository;
         this.paymentNumberGenerator =
                 paymentNumberGenerator;
-
+        this.activationTaskRepository =
+                activationTaskRepository;
         this.applicationEventPublisher =
                 applicationEventPublisher;
     }
@@ -82,6 +93,9 @@ public class PaymentService {
                                                 enrollmentId
                                         )
                         );
+
+        boolean initialPaymentSatisfiedBefore =
+                account.isInitialPaymentSatisfied();
 
         BigDecimal paymentAmount =
                 normalizePaymentAmount(request.amount());
@@ -175,6 +189,7 @@ public class PaymentService {
             );
 
             allocationOrder++;
+
             remainingToAllocate =
                     remainingToAllocate.subtract(
                             allocationAmount
@@ -193,6 +208,37 @@ public class PaymentService {
         List<PaymentAllocation> savedAllocations =
                 paymentAllocationRepository
                         .saveAll(allocations);
+
+        boolean initialPaymentSatisfiedNow =
+                account.isInitialPaymentSatisfied();
+
+        if (
+                !initialPaymentSatisfiedBefore
+                        && initialPaymentSatisfiedNow
+        ) {
+            EnrollmentActivationTask activationTask =
+                    activationTaskRepository
+                            .findByEnrollmentId(
+                                    account.getEnrollmentId()
+                            )
+                            .orElseGet(
+                                    () ->
+                                            activationTaskRepository
+                                                    .saveAndFlush(
+                                                            EnrollmentActivationTask
+                                                                    .create(
+                                                                            account.getEnrollmentId(),
+                                                                            savedPayment.getId()
+                                                                    )
+                                                    )
+                            );
+
+            applicationEventPublisher.publishEvent(
+                    new EnrollmentActivationRequested(
+                            activationTask.getId()
+                    )
+            );
+        }
 
         applicationEventPublisher.publishEvent(
                 FinanceNotificationEvent
