@@ -1,6 +1,9 @@
 package com.centerflow.finance.common.api.error;
 
 import com.centerflow.finance.account.domain.InvalidFinancialAccountPaymentException;
+import com.centerflow.finance.adjustment.domain.InvalidFinancialAdjustmentException;
+import com.centerflow.finance.adjustment.exception.FinancialAdjustmentConflictException;
+import com.centerflow.finance.adjustment.exception.FinancialAdjustmentNotFoundException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountConflictException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountNotFoundException;
 import com.centerflow.finance.account.exception.InvalidInstallmentSearchException;
@@ -35,6 +38,7 @@ public class GlobalExceptionHandler {
                     EnrollmentFinancialAccountConflictException.class,
                     PaymentConflictException.class,
                     InvalidFinancialAccountPaymentException.class,
+                    FinancialAdjustmentConflictException.class,
                     RefundConflictException.class,
                     InvalidRefundException.class
             }
@@ -56,6 +60,7 @@ public class GlobalExceptionHandler {
                     PricingPlanNotFoundException.class,
                     EnrollmentFinancialAccountNotFoundException.class,
                     PaymentNotFoundException.class,
+                    FinancialAdjustmentNotFoundException.class,
                     RefundNotFoundException.class
             }
     )
@@ -75,7 +80,8 @@ public class GlobalExceptionHandler {
             {
                     InvalidPricingPlanException.class,
                     InvalidPaginationException.class,
-                    InvalidInstallmentSearchException.class
+                    InvalidInstallmentSearchException.class,
+                    InvalidFinancialAdjustmentException.class
             }
     )
     public ResponseEntity<ApiErrorResponse>

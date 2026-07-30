@@ -1,6 +1,7 @@
 package com.centerflow.finance.account.domain;
 
 import com.centerflow.finance.refund.domain.InvalidRefundException;
+import com.centerflow.finance.adjustment.exception.FinancialAdjustmentConflictException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -218,6 +219,91 @@ public class Installment {
         paidAmount = paidAmount.subtract(normalized);
 
         if (dueDate.isBefore(asOfDate)) {
+            status = InstallmentStatus.OVERDUE;
+        }
+        else if (paidAmount.signum() == 0) {
+            status = InstallmentStatus.PENDING;
+        }
+        else {
+            status = InstallmentStatus.PARTIALLY_PAID;
+        }
+
+        updatedAt = Instant.now();
+    }
+
+    public void applyDiscount(
+            BigDecimal discountAmount,
+            LocalDate asOfDate
+    ) {
+        BigDecimal normalized =
+                normalizePositiveMoney(
+                        discountAmount
+                );
+
+        Objects.requireNonNull(
+                asOfDate,
+                "Accounting date is required"
+        );
+
+        if (status == InstallmentStatus.CANCELLED) {
+            throw new FinancialAdjustmentConflictException(
+                    "Discount cannot be applied to "
+                            + "a CANCELLED installment"
+            );
+        }
+
+        if (
+                normalized.compareTo(
+                        getRemainingAmount()
+                ) > 0
+        ) {
+            throw new FinancialAdjustmentConflictException(
+                    "Discount exceeds installment "
+                            + "remaining amount"
+            );
+        }
+
+        amount = amount.subtract(normalized);
+
+        refreshStatusAfterAdjustment(asOfDate);
+    }
+
+    public void applyCharge(
+            BigDecimal chargeAmount,
+            LocalDate asOfDate
+    ) {
+        BigDecimal normalized =
+                normalizePositiveMoney(
+                        chargeAmount
+                );
+
+        Objects.requireNonNull(
+                asOfDate,
+                "Accounting date is required"
+        );
+
+        if (status == InstallmentStatus.CANCELLED) {
+            throw new FinancialAdjustmentConflictException(
+                    "Charge cannot be applied to "
+                            + "a CANCELLED installment"
+            );
+        }
+
+        amount = amount.add(normalized);
+
+        refreshStatusAfterAdjustment(asOfDate);
+    }
+
+    private void refreshStatusAfterAdjustment(
+            LocalDate asOfDate
+    ) {
+        if (amount.signum() == 0) {
+            status = InstallmentStatus.CANCELLED;
+        }
+        else if (paidAmount.compareTo(amount) == 0) {
+            status = InstallmentStatus.PAID;
+        }
+        else if (dueDate.isBefore(asOfDate)) {
             status = InstallmentStatus.OVERDUE;
         }
         else if (paidAmount.signum() == 0) {

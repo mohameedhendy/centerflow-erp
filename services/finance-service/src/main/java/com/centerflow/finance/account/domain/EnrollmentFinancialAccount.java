@@ -1,5 +1,7 @@
 package com.centerflow.finance.account.domain;
 
+import com.centerflow.finance.adjustment.exception.FinancialAdjustmentConflictException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -232,6 +234,108 @@ public class EnrollmentFinancialAccount {
         paidAmount = paidAmount.subtract(normalizedRefund);
 
         if (status == FinancialAccountStatus.SETTLED) {
+            status = FinancialAccountStatus.OPEN;
+        }
+
+        updatedAt = Instant.now();
+    }
+
+    public void applyDiscount(
+            BigDecimal discountAmount
+    ) {
+        BigDecimal normalizedDiscount =
+                normalizeMoney(
+                        discountAmount,
+                        "Discount amount"
+                );
+
+        validateAdjustmentAllowed();
+
+        if (normalizedDiscount.signum() <= 0) {
+            throw new FinancialAdjustmentConflictException(
+                    "Discount amount must be greater than zero"
+            );
+        }
+
+        if (
+                normalizedDiscount.compareTo(
+                        getRemainingAmount()
+                ) > 0
+        ) {
+            throw new FinancialAdjustmentConflictException(
+                    "Discount amount exceeds remaining balance"
+            );
+        }
+
+        if (
+                normalizedDiscount.compareTo(
+                        totalAmount
+                ) >= 0
+        ) {
+            throw new FinancialAdjustmentConflictException(
+                    "Discount cannot reduce the total amount "
+                            + "to zero"
+            );
+        }
+
+        totalAmount =
+                totalAmount.subtract(
+                        normalizedDiscount
+                );
+
+        if (
+                initialPaymentAmount.compareTo(
+                        totalAmount
+                ) > 0
+        ) {
+            initialPaymentAmount = totalAmount;
+        }
+
+        refreshStatusAfterAdjustment();
+    }
+
+    public void applyCharge(
+            BigDecimal chargeAmount
+    ) {
+        BigDecimal normalizedCharge =
+                normalizeMoney(
+                        chargeAmount,
+                        "Charge amount"
+                );
+
+        validateAdjustmentAllowed();
+
+        if (normalizedCharge.signum() <= 0) {
+            throw new FinancialAdjustmentConflictException(
+                    "Charge amount must be greater than zero"
+            );
+        }
+
+        totalAmount =
+                totalAmount.add(
+                        normalizedCharge
+                );
+
+        refreshStatusAfterAdjustment();
+    }
+
+    private void validateAdjustmentAllowed() {
+        if (
+                status
+                        == FinancialAccountStatus.CANCELLED
+        ) {
+            throw new FinancialAdjustmentConflictException(
+                    "Financial adjustments cannot be "
+                            + "recorded for a CANCELLED account"
+            );
+        }
+    }
+
+    private void refreshStatusAfterAdjustment() {
+        if (paidAmount.compareTo(totalAmount) == 0) {
+            status = FinancialAccountStatus.SETTLED;
+        }
+        else {
             status = FinancialAccountStatus.OPEN;
         }
 

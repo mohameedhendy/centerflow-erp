@@ -30,13 +30,14 @@ class FinanceDatabaseMigrationTests {
                       'payment_allocations',
                       'refunds',
                       'refund_allocations',
-                      'enrollment_activation_tasks'
+                      'enrollment_activation_tasks',
+                      'financial_adjustments'
                   )
                 """,
                 Integer.class
         );
 
-        assertThat(tableCount).isEqualTo(8);
+        assertThat(tableCount).isEqualTo(9);
     }
 
     @Test
@@ -52,6 +53,6 @@ class FinanceDatabaseMigrationTests {
                 String.class
         );
 
-        assertThat(version).isEqualTo("5");
+        assertThat(version).isEqualTo("6");
     }
 }
