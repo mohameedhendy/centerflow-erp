@@ -204,6 +204,40 @@ public class EnrollmentFinancialAccount {
         updatedAt = Instant.now();
     }
 
+    public void recordRefund(BigDecimal refundAmount) {
+        BigDecimal normalizedRefund = normalizeMoney(
+                refundAmount,
+                "Refund amount"
+        );
+
+        if (normalizedRefund.signum() <= 0) {
+            throw new com.centerflow.finance.refund.domain.InvalidRefundException(
+                    "Refund amount must be greater than zero"
+            );
+        }
+
+        if (status == FinancialAccountStatus.CANCELLED) {
+            throw new com.centerflow.finance.refund.domain.InvalidRefundException(
+                    "Refund cannot be recorded for "
+                            + "CANCELLED financial account"
+            );
+        }
+
+        if (normalizedRefund.compareTo(paidAmount) > 0) {
+            throw new com.centerflow.finance.refund.domain.InvalidRefundException(
+                    "Refund amount exceeds account paid amount"
+            );
+        }
+
+        paidAmount = paidAmount.subtract(normalizedRefund);
+
+        if (status == FinancialAccountStatus.SETTLED) {
+            status = FinancialAccountStatus.OPEN;
+        }
+
+        updatedAt = Instant.now();
+    }
+
     public BigDecimal getRemainingAmount() {
         return totalAmount.subtract(paidAmount);
     }

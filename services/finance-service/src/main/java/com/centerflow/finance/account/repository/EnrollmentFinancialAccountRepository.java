@@ -32,4 +32,16 @@ public interface EnrollmentFinancialAccountRepository
             @Param("enrollmentId")
             UUID enrollmentId
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT account
+            FROM EnrollmentFinancialAccount account
+            WHERE account.id = :accountId
+            """)
+    Optional<EnrollmentFinancialAccount>
+    findByIdForUpdate(
+            @Param("accountId")
+            UUID accountId
+    );
 }

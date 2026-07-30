@@ -31,4 +31,16 @@ public interface InstallmentRepository
             @Param("financialAccountId")
             UUID financialAccountId
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT installment
+            FROM Installment installment
+            WHERE installment.id = :installmentId
+            """)
+    java.util.Optional<Installment>
+    findByIdForUpdate(
+            @Param("installmentId")
+            UUID installmentId
+    );
 }

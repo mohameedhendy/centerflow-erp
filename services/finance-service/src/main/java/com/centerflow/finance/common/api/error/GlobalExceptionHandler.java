@@ -7,6 +7,9 @@ import com.centerflow.finance.common.exception.InvalidPaginationException;
 import com.centerflow.finance.payment.exception.PaymentConflictException;
 import com.centerflow.finance.payment.exception.PaymentNotFoundException;
 import com.centerflow.finance.pricing.domain.InvalidPricingPlanException;
+import com.centerflow.finance.refund.domain.InvalidRefundException;
+import com.centerflow.finance.refund.exception.RefundConflictException;
+import com.centerflow.finance.refund.exception.RefundNotFoundException;
 import com.centerflow.finance.pricing.exception.PricingPlanConflictException;
 import com.centerflow.finance.pricing.exception.PricingPlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +33,9 @@ public class GlobalExceptionHandler {
                     PricingPlanConflictException.class,
                     EnrollmentFinancialAccountConflictException.class,
                     PaymentConflictException.class,
-                    InvalidFinancialAccountPaymentException.class
+                    InvalidFinancialAccountPaymentException.class,
+                    RefundConflictException.class,
+                    InvalidRefundException.class
             }
     )
     public ResponseEntity<ApiErrorResponse> handleConflict(
@@ -49,7 +54,8 @@ public class GlobalExceptionHandler {
             {
                     PricingPlanNotFoundException.class,
                     EnrollmentFinancialAccountNotFoundException.class,
-                    PaymentNotFoundException.class
+                    PaymentNotFoundException.class,
+                    RefundNotFoundException.class
             }
     )
     public ResponseEntity<ApiErrorResponse> handleNotFound(

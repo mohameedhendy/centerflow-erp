@@ -1,5 +1,6 @@
 package com.centerflow.finance.payment.domain;
 
+import com.centerflow.finance.refund.domain.InvalidRefundException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,6 +47,14 @@ public class Payment {
     private BigDecimal amount;
 
     @Column(
+            name = "refunded_amount",
+            nullable = false,
+            precision = 19,
+            scale = 2
+    )
+    private BigDecimal refundedAmount;
+
+    @Column(
             name = "currency",
             nullable = false,
             length = 3
@@ -82,6 +91,7 @@ public class Payment {
             String paymentNumber,
             UUID financialAccountId,
             BigDecimal amount,
+            BigDecimal refundedAmount,
             String currency,
             PaymentMethod method,
             String externalReference,
@@ -94,6 +104,10 @@ public class Payment {
         this.financialAccountId =
                 Objects.requireNonNull(financialAccountId);
         this.amount = normalizeAmount(amount);
+        this.refundedAmount =
+                normalizeNonNegativeMoney(
+                        refundedAmount
+                );
         this.currency = normalizeCurrency(currency);
         this.method = Objects.requireNonNull(method);
         this.externalReference =
@@ -118,12 +132,90 @@ public class Payment {
                 paymentNumber,
                 financialAccountId,
                 amount,
+                new BigDecimal("0.00"),
                 currency,
                 method,
                 externalReference,
                 PaymentStatus.RECORDED,
                 Instant.now()
         );
+    }
+
+    public void recordRefund(BigDecimal refundAmount) {
+        BigDecimal normalized =
+                normalizePositiveRefund(refundAmount);
+
+        if (
+                normalized.compareTo(
+                        getRefundableAmount()
+                ) > 0
+        ) {
+            throw new InvalidRefundException(
+                    "Refund amount exceeds payment "
+                            + "refundable amount"
+            );
+        }
+
+        refundedAmount = refundedAmount.add(normalized);
+
+        if (refundedAmount.compareTo(amount) == 0) {
+            status = PaymentStatus.REFUNDED;
+        }
+        else {
+            status = PaymentStatus.PARTIALLY_REFUNDED;
+        }
+    }
+
+    public BigDecimal getRefundableAmount() {
+        return amount.subtract(refundedAmount);
+    }
+
+    private static BigDecimal normalizePaymentNumberMoney(
+            BigDecimal amount
+    ) {
+        return normalizeAmount(amount);
+    }
+
+    private static BigDecimal normalizePositiveRefund(
+            BigDecimal amount
+    ) {
+        BigDecimal normalized =
+                normalizePaymentNumberMoney(amount);
+
+        if (normalized.signum() <= 0) {
+            throw new InvalidRefundException(
+                    "Refund amount must be greater than zero"
+            );
+        }
+
+        return normalized;
+    }
+
+    private static BigDecimal normalizeNonNegativeMoney(
+            BigDecimal amount
+    ) {
+        Objects.requireNonNull(amount);
+
+        try {
+            BigDecimal normalized = amount.setScale(
+                    2,
+                    RoundingMode.UNNECESSARY
+            );
+
+            if (normalized.signum() < 0) {
+                throw new IllegalArgumentException(
+                        "Refunded amount cannot be negative"
+                );
+            }
+
+            return normalized;
+        }
+        catch (ArithmeticException exception) {
+            throw new IllegalArgumentException(
+                    "Refunded amount must have no more "
+                            + "than two decimal places"
+            );
+        }
     }
 
     private static String normalizePaymentNumber(
@@ -216,6 +308,10 @@ public class Payment {
 
     public BigDecimal getAmount() {
         return amount;
+    }
+
+    public BigDecimal getRefundedAmount() {
+        return refundedAmount;
     }
 
     public String getCurrency() {

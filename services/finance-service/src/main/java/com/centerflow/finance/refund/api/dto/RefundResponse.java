@@ -1,64 +1,70 @@
-package com.centerflow.finance.payment.api.dto;
+package com.centerflow.finance.refund.api.dto;
 
 import com.centerflow.finance.account.domain.EnrollmentFinancialAccount;
 import com.centerflow.finance.account.domain.FinancialAccountStatus;
 import com.centerflow.finance.payment.domain.Payment;
-import com.centerflow.finance.payment.domain.PaymentAllocation;
-import com.centerflow.finance.payment.domain.PaymentMethod;
 import com.centerflow.finance.payment.domain.PaymentStatus;
+import com.centerflow.finance.refund.domain.Refund;
+import com.centerflow.finance.refund.domain.RefundAllocation;
+import com.centerflow.finance.refund.domain.RefundStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record PaymentResponse(
+public record RefundResponse(
 
         UUID id,
+        String refundNumber,
+        UUID paymentId,
         String paymentNumber,
-        UUID financialAccountId,
         UUID enrollmentId,
         BigDecimal amount,
-        BigDecimal refundedAmount,
-        BigDecimal refundableAmount,
         String currency,
-        PaymentMethod method,
+        String reason,
         String externalReference,
-        PaymentStatus status,
+        RefundStatus status,
+        BigDecimal paymentRefundedAmount,
+        BigDecimal paymentRefundableAmount,
+        PaymentStatus paymentStatus,
         BigDecimal accountPaidAmount,
         BigDecimal accountRemainingAmount,
         boolean initialPaymentSatisfied,
         FinancialAccountStatus financialAccountStatus,
-        List<PaymentAllocationResponse> allocations,
+        List<RefundAllocationResponse> allocations,
         Instant recordedAt
 
 ) {
 
-    public static PaymentResponse from(
+    public static RefundResponse from(
+            Refund refund,
             Payment payment,
             EnrollmentFinancialAccount account,
-            List<PaymentAllocation> allocations
+            List<RefundAllocation> allocations
     ) {
-        return new PaymentResponse(
+        return new RefundResponse(
+                refund.getId(),
+                refund.getRefundNumber(),
                 payment.getId(),
                 payment.getPaymentNumber(),
-                payment.getFinancialAccountId(),
                 account.getEnrollmentId(),
-                payment.getAmount(),
+                refund.getAmount(),
+                refund.getCurrency(),
+                refund.getReason(),
+                refund.getExternalReference(),
+                refund.getStatus(),
                 payment.getRefundedAmount(),
                 payment.getRefundableAmount(),
-                payment.getCurrency(),
-                payment.getMethod(),
-                payment.getExternalReference(),
                 payment.getStatus(),
                 account.getPaidAmount(),
                 account.getRemainingAmount(),
                 account.isInitialPaymentSatisfied(),
                 account.getStatus(),
                 allocations.stream()
-                        .map(PaymentAllocationResponse::from)
+                        .map(RefundAllocationResponse::from)
                         .toList(),
-                payment.getRecordedAt()
+                refund.getRecordedAt()
         );
     }
 }

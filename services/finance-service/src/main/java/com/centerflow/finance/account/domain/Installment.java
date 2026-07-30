@@ -160,6 +160,29 @@ public class Installment {
         updatedAt = Instant.now();
     }
 
+    public void refundPayment(BigDecimal refundAmount) {
+        BigDecimal normalized =
+                normalizePositiveMoney(refundAmount);
+
+        if (normalized.compareTo(paidAmount) > 0) {
+            throw new com.centerflow.finance.refund.domain.InvalidRefundException(
+                    "Refund allocation exceeds installment "
+                            + "paid amount"
+            );
+        }
+
+        paidAmount = paidAmount.subtract(normalized);
+
+        if (paidAmount.signum() == 0) {
+            status = InstallmentStatus.PENDING;
+        }
+        else {
+            status = InstallmentStatus.PARTIALLY_PAID;
+        }
+
+        updatedAt = Instant.now();
+    }
+
     public BigDecimal getRemainingAmount() {
         return amount.subtract(paidAmount);
     }
