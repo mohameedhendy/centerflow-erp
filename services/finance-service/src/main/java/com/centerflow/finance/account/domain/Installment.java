@@ -1,5 +1,6 @@
 package com.centerflow.finance.account.domain;
 
+import com.centerflow.finance.refund.domain.InvalidRefundException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -119,6 +121,27 @@ public class Installment {
         );
     }
 
+    public boolean markOverdue(LocalDate asOfDate) {
+        Objects.requireNonNull(
+                asOfDate,
+                "Accounting date is required"
+        );
+
+        boolean unpaidStatus =
+                status == InstallmentStatus.PENDING
+                        || status
+                        == InstallmentStatus.PARTIALLY_PAID;
+
+        if (!unpaidStatus || !dueDate.isBefore(asOfDate)) {
+            return false;
+        }
+
+        status = InstallmentStatus.OVERDUE;
+        updatedAt = Instant.now();
+
+        return true;
+    }
+
     public void allocatePayment(
             BigDecimal allocationAmount
     ) {
@@ -148,10 +171,16 @@ public class Installment {
             );
         }
 
+        boolean wasOverdue =
+                status == InstallmentStatus.OVERDUE;
+
         paidAmount = paidAmount.add(normalized);
 
         if (paidAmount.compareTo(amount) == 0) {
             status = InstallmentStatus.PAID;
+        }
+        else if (wasOverdue) {
+            status = InstallmentStatus.OVERDUE;
         }
         else {
             status = InstallmentStatus.PARTIALLY_PAID;
@@ -161,11 +190,26 @@ public class Installment {
     }
 
     public void refundPayment(BigDecimal refundAmount) {
+        refundPayment(
+                refundAmount,
+                LocalDate.now(ZoneOffset.UTC)
+        );
+    }
+
+    public void refundPayment(
+            BigDecimal refundAmount,
+            LocalDate asOfDate
+    ) {
         BigDecimal normalized =
                 normalizePositiveMoney(refundAmount);
 
+        Objects.requireNonNull(
+                asOfDate,
+                "Accounting date is required"
+        );
+
         if (normalized.compareTo(paidAmount) > 0) {
-            throw new com.centerflow.finance.refund.domain.InvalidRefundException(
+            throw new InvalidRefundException(
                     "Refund allocation exceeds installment "
                             + "paid amount"
             );
@@ -173,7 +217,10 @@ public class Installment {
 
         paidAmount = paidAmount.subtract(normalized);
 
-        if (paidAmount.signum() == 0) {
+        if (dueDate.isBefore(asOfDate)) {
+            status = InstallmentStatus.OVERDUE;
+        }
+        else if (paidAmount.signum() == 0) {
             status = InstallmentStatus.PENDING;
         }
         else {
@@ -211,7 +258,8 @@ public class Installment {
                     2,
                     RoundingMode.UNNECESSARY
             );
-        } catch (ArithmeticException exception) {
+        }
+        catch (ArithmeticException exception) {
             throw new IllegalArgumentException(
                     "Money amount must have no more than "
                             + "two decimal places"

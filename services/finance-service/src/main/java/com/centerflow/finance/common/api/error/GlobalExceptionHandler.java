@@ -3,15 +3,16 @@ package com.centerflow.finance.common.api.error;
 import com.centerflow.finance.account.domain.InvalidFinancialAccountPaymentException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountConflictException;
 import com.centerflow.finance.account.exception.EnrollmentFinancialAccountNotFoundException;
+import com.centerflow.finance.account.exception.InvalidInstallmentSearchException;
 import com.centerflow.finance.common.exception.InvalidPaginationException;
 import com.centerflow.finance.payment.exception.PaymentConflictException;
 import com.centerflow.finance.payment.exception.PaymentNotFoundException;
 import com.centerflow.finance.pricing.domain.InvalidPricingPlanException;
+import com.centerflow.finance.pricing.exception.PricingPlanConflictException;
+import com.centerflow.finance.pricing.exception.PricingPlanNotFoundException;
 import com.centerflow.finance.refund.domain.InvalidRefundException;
 import com.centerflow.finance.refund.exception.RefundConflictException;
 import com.centerflow.finance.refund.exception.RefundNotFoundException;
-import com.centerflow.finance.pricing.exception.PricingPlanConflictException;
-import com.centerflow.finance.pricing.exception.PricingPlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,24 +71,16 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(InvalidPricingPlanException.class)
+    @ExceptionHandler(
+            {
+                    InvalidPricingPlanException.class,
+                    InvalidPaginationException.class,
+                    InvalidInstallmentSearchException.class
+            }
+    )
     public ResponseEntity<ApiErrorResponse>
-    handleInvalidPricingPlan(
-            InvalidPricingPlanException exception,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage(),
-                Map.of(),
-                request.getRequestURI()
-        );
-    }
-
-    @ExceptionHandler(InvalidPaginationException.class)
-    public ResponseEntity<ApiErrorResponse>
-    handleInvalidPagination(
-            InvalidPaginationException exception,
+    handleBadRequest(
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return buildResponse(
