@@ -18,6 +18,8 @@ import com.centerflow.finance.refund.exception.RefundNotFoundException;
 import com.centerflow.finance.refund.number.RefundNumberGenerator;
 import com.centerflow.finance.refund.repository.RefundAllocationRepository;
 import com.centerflow.finance.refund.repository.RefundRepository;
+import com.centerflow.finance.integration.notification.FinanceNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,9 @@ public class RefundService {
     private final RefundNumberGenerator
             refundNumberGenerator;
 
+    private final ApplicationEventPublisher
+            applicationEventPublisher;
+
     public RefundService(
             RefundRepository refundRepository,
             RefundAllocationRepository
@@ -58,7 +63,8 @@ public class RefundService {
             EnrollmentFinancialAccountRepository
                     financialAccountRepository,
             InstallmentRepository installmentRepository,
-            RefundNumberGenerator refundNumberGenerator
+            RefundNumberGenerator refundNumberGenerator,
+            ApplicationEventPublisher applicationEventPublisher
     ) {
         this.refundRepository = refundRepository;
         this.refundAllocationRepository =
@@ -72,6 +78,9 @@ public class RefundService {
                 installmentRepository;
         this.refundNumberGenerator =
                 refundNumberGenerator;
+
+        this.applicationEventPublisher =
+                applicationEventPublisher;
     }
 
     @Transactional
@@ -238,6 +247,15 @@ public class RefundService {
                                 )
                         )
                         .toList();
+
+        applicationEventPublisher.publishEvent(
+                FinanceNotificationEvent
+                        .paymentRefunded(
+                                savedRefund,
+                                payment,
+                                account
+                        )
+        );
 
         return RefundResponse.from(
                 savedRefund,

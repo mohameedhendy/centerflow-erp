@@ -15,6 +15,8 @@ import com.centerflow.finance.payment.exception.PaymentNotFoundException;
 import com.centerflow.finance.payment.number.PaymentNumberGenerator;
 import com.centerflow.finance.payment.repository.PaymentAllocationRepository;
 import com.centerflow.finance.payment.repository.PaymentRepository;
+import com.centerflow.finance.integration.notification.FinanceNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,9 @@ public class PaymentService {
     private final PaymentNumberGenerator
             paymentNumberGenerator;
 
+    private final ApplicationEventPublisher
+            applicationEventPublisher;
+
     public PaymentService(
             EnrollmentFinancialAccountRepository
                     financialAccountRepository,
@@ -45,7 +50,8 @@ public class PaymentService {
             PaymentRepository paymentRepository,
             PaymentAllocationRepository
                     paymentAllocationRepository,
-            PaymentNumberGenerator paymentNumberGenerator
+            PaymentNumberGenerator paymentNumberGenerator,
+            ApplicationEventPublisher applicationEventPublisher
     ) {
         this.financialAccountRepository =
                 financialAccountRepository;
@@ -55,6 +61,9 @@ public class PaymentService {
                 paymentAllocationRepository;
         this.paymentNumberGenerator =
                 paymentNumberGenerator;
+
+        this.applicationEventPublisher =
+                applicationEventPublisher;
     }
 
     @Transactional
@@ -184,6 +193,14 @@ public class PaymentService {
         List<PaymentAllocation> savedAllocations =
                 paymentAllocationRepository
                         .saveAll(allocations);
+
+        applicationEventPublisher.publishEvent(
+                FinanceNotificationEvent
+                        .paymentRecorded(
+                                savedPayment,
+                                account
+                        )
+        );
 
         return PaymentResponse.from(
                 savedPayment,

@@ -39,3 +39,9 @@ management:
   endpoint:
     health:
       show-details: never
+
+centerflow:
+  integration:
+    notification:
+      enabled: "${NOTIFICATION_INTEGRATION_ENABLED:true}"
+      base-url: "${NOTIFICATION_SERVICE_URL:http://localhost:8085}"

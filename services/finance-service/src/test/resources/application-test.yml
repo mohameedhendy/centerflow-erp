@@ -21,3 +21,9 @@ spring:
 
 server:
   port: 0
+
+centerflow:
+  integration:
+    notification:
+      enabled: false
+      base-url: http://localhost:8085
