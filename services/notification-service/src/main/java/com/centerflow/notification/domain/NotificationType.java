@@ -1,0 +1,12 @@
+package com.centerflow.notification.domain;
+
+public enum NotificationType {
+    GENERAL,
+    ENROLLMENT_CREATED,
+    ENROLLMENT_ACTIVATED,
+    ENROLLMENT_SUSPENDED,
+    PAYMENT_RECORDED,
+    PAYMENT_REFUNDED,
+    INSTALLMENT_OVERDUE,
+    ATTENDANCE_RECORDED
+}
