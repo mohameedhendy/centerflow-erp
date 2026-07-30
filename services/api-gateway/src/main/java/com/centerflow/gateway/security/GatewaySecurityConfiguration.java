@@ -32,6 +32,10 @@ public class GatewaySecurityConfiguration {
                 .authorizeExchange(authorize ->
                         authorize
                                 .pathMatchers(
+                                        "/api/v1/finance/internal/**"
+                                )
+                                .denyAll()
+                                .pathMatchers(
                                         HttpMethod.POST,
                                         "/api/v1/auth/register",
                                         "/api/v1/auth/login",
