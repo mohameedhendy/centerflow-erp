@@ -32,13 +32,14 @@ class FinanceDatabaseMigrationTests {
                       'refund_allocations',
                       'enrollment_activation_tasks',
                       'financial_adjustments',
-                      'expenses'
+                      'expenses',
+                      'instructor_earnings'
                   )
                 """,
                 Integer.class
         );
 
-        assertThat(tableCount).isEqualTo(10);
+        assertThat(tableCount).isEqualTo(11);
     }
 
     @Test
@@ -54,6 +55,6 @@ class FinanceDatabaseMigrationTests {
                 String.class
         );
 
-        assertThat(version).isEqualTo("7");
+        assertThat(version).isEqualTo("8");
     }
 }
