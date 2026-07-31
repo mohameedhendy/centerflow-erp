@@ -1,6 +1,7 @@
 package com.centerflow.finance.integration.enrollment;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -23,7 +24,9 @@ public class EnrollmentActivationProcessor {
         this.activationClient = activationClient;
     }
 
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW
+    )
     public EnrollmentActivationTaskResponse process(
             UUID taskId
     ) {
@@ -61,12 +64,16 @@ public class EnrollmentActivationProcessor {
             );
         }
 
-        return EnrollmentActivationTaskResponse.from(task);
+        return EnrollmentActivationTaskResponse.from(
+                task
+        );
     }
 
     @Transactional(readOnly = true)
     public EnrollmentActivationTaskResponse
-    getByEnrollmentId(UUID enrollmentId) {
+    getByEnrollmentId(
+            UUID enrollmentId
+    ) {
         EnrollmentActivationTask task =
                 taskRepository
                         .findByEnrollmentId(enrollmentId)
@@ -78,7 +85,9 @@ public class EnrollmentActivationProcessor {
                                                 )
                         );
 
-        return EnrollmentActivationTaskResponse.from(task);
+        return EnrollmentActivationTaskResponse.from(
+                task
+        );
     }
 
     private String resolveErrorMessage(
