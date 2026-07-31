@@ -10,7 +10,9 @@ import com.centerflow.finance.account.repository.EnrollmentFinancialAccountRepos
 import com.centerflow.finance.account.repository.InstallmentRepository;
 import com.centerflow.finance.common.api.PageResponse;
 import com.centerflow.finance.common.exception.InvalidPaginationException;
+import com.centerflow.finance.integration.notification.FinanceNotificationEvent;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,23 +36,29 @@ public class InstallmentCollectionService {
 
     private static final EnumSet<InstallmentStatus>
             OVERDUE_ELIGIBLE_STATUSES = EnumSet.of(
-                    InstallmentStatus.PENDING,
-                    InstallmentStatus.PARTIALLY_PAID
-            );
+            InstallmentStatus.PENDING,
+            InstallmentStatus.PARTIALLY_PAID
+    );
 
     private final InstallmentRepository installmentRepository;
 
     private final EnrollmentFinancialAccountRepository
             financialAccountRepository;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     public InstallmentCollectionService(
             InstallmentRepository installmentRepository,
             EnrollmentFinancialAccountRepository
-                    financialAccountRepository
+                    financialAccountRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.installmentRepository = installmentRepository;
+
         this.financialAccountRepository =
                 financialAccountRepository;
+
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -64,12 +72,74 @@ public class InstallmentCollectionService {
                                 OVERDUE_ELIGIBLE_STATUSES
                         );
 
+        if (installments.isEmpty()) {
+            return new OverdueProcessingResponse(
+                    asOfDate,
+                    0
+            );
+        }
+
+        List<UUID> financialAccountIds =
+                installments
+                        .stream()
+                        .map(
+                                Installment
+                                        ::getFinancialAccountId
+                        )
+                        .distinct()
+                        .toList();
+
+        Map<UUID, EnrollmentFinancialAccount>
+                accountsById =
+                financialAccountRepository
+                        .findAllById(
+                                financialAccountIds
+                        )
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        EnrollmentFinancialAccount
+                                                ::getId,
+                                        Function.identity()
+                                )
+                        );
+
         int markedCount = 0;
 
         for (Installment installment : installments) {
-            if (installment.markOverdue(asOfDate)) {
-                markedCount++;
+            boolean changed =
+                    installment.markOverdue(
+                            asOfDate
+                    );
+
+            if (!changed) {
+                continue;
             }
+
+            EnrollmentFinancialAccount account =
+                    accountsById.get(
+                            installment
+                                    .getFinancialAccountId()
+                    );
+
+            if (account == null) {
+                throw new IllegalStateException(
+                        "Installment financial account "
+                                + "does not exist: "
+                                + installment
+                                .getFinancialAccountId()
+                );
+            }
+
+            eventPublisher.publishEvent(
+                    FinanceNotificationEvent
+                            .installmentOverdue(
+                                    installment,
+                                    account
+                            )
+            );
+
+            markedCount++;
         }
 
         return new OverdueProcessingResponse(
@@ -135,14 +205,19 @@ public class InstallmentCollectionService {
         List<UUID> pageAccountIds =
                 installmentPage.getContent()
                         .stream()
-                        .map(Installment::getFinancialAccountId)
+                        .map(
+                                Installment
+                                        ::getFinancialAccountId
+                        )
                         .distinct()
                         .toList();
 
         Map<UUID, EnrollmentFinancialAccount>
                 accountsById =
                 financialAccountRepository
-                        .findAllById(pageAccountIds)
+                        .findAllById(
+                                pageAccountIds
+                        )
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -183,14 +258,16 @@ public class InstallmentCollectionService {
         if (enrollmentId != null) {
             return financialAccountRepository
                     .findByEnrollmentId(enrollmentId)
-                    .filter(account ->
-                            studentId == null
-                                    || account
-                                    .getStudentId()
-                                    .equals(studentId)
+                    .filter(
+                            account ->
+                                    studentId == null
+                                            || account
+                                            .getStudentId()
+                                            .equals(studentId)
                     )
-                    .map(account ->
-                            List.of(account.getId())
+                    .map(
+                            account ->
+                                    List.of(account.getId())
                     )
                     .orElseGet(List::of);
         }
@@ -242,10 +319,11 @@ public class InstallmentCollectionService {
 
             if (dueTo != null) {
                 predicates.add(
-                        criteriaBuilder.lessThanOrEqualTo(
-                                root.get("dueDate"),
-                                dueTo
-                        )
+                        criteriaBuilder
+                                .lessThanOrEqualTo(
+                                        root.get("dueDate"),
+                                        dueTo
+                                )
                 );
             }
 

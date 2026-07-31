@@ -1,6 +1,7 @@
 package com.centerflow.finance.integration.notification;
 
 import com.centerflow.finance.account.domain.EnrollmentFinancialAccount;
+import com.centerflow.finance.account.domain.Installment;
 import com.centerflow.finance.payment.domain.Payment;
 import com.centerflow.finance.refund.domain.Refund;
 
@@ -58,8 +59,7 @@ public record FinanceNotificationEvent(
         );
     }
 
-    public static FinanceNotificationEvent
-    paymentRecorded(
+    public static FinanceNotificationEvent paymentRecorded(
             Payment payment,
             EnrollmentFinancialAccount account
     ) {
@@ -68,13 +68,11 @@ public record FinanceNotificationEvent(
 
         return new FinanceNotificationEvent(
                 createSourceEventId(
-                        FinanceNotificationType
-                                .PAYMENT_RECORDED,
+                        FinanceNotificationType.PAYMENT_RECORDED,
                         payment.getId()
                 ),
                 account.getStudentId(),
-                FinanceNotificationType
-                        .PAYMENT_RECORDED,
+                FinanceNotificationType.PAYMENT_RECORDED,
                 "Payment received",
                 "Payment "
                         + payment.getPaymentNumber()
@@ -88,8 +86,7 @@ public record FinanceNotificationEvent(
         );
     }
 
-    public static FinanceNotificationEvent
-    paymentRefunded(
+    public static FinanceNotificationEvent paymentRefunded(
             Refund refund,
             Payment payment,
             EnrollmentFinancialAccount account
@@ -100,13 +97,11 @@ public record FinanceNotificationEvent(
 
         return new FinanceNotificationEvent(
                 createSourceEventId(
-                        FinanceNotificationType
-                                .PAYMENT_REFUNDED,
+                        FinanceNotificationType.PAYMENT_REFUNDED,
                         refund.getId()
                 ),
                 account.getStudentId(),
-                FinanceNotificationType
-                        .PAYMENT_REFUNDED,
+                FinanceNotificationType.PAYMENT_REFUNDED,
                 "Payment refunded",
                 "Refund "
                         + refund.getRefundNumber()
@@ -119,6 +114,37 @@ public record FinanceNotificationEvent(
                         + ".",
                 "ENROLLMENT",
                 account.getEnrollmentId()
+        );
+    }
+
+    public static FinanceNotificationEvent installmentOverdue(
+            Installment installment,
+            EnrollmentFinancialAccount account
+    ) {
+        Objects.requireNonNull(installment);
+        Objects.requireNonNull(account);
+
+        return new FinanceNotificationEvent(
+                createSourceEventId(
+                        FinanceNotificationType.INSTALLMENT_OVERDUE,
+                        installment.getId()
+                ),
+                account.getStudentId(),
+                FinanceNotificationType.INSTALLMENT_OVERDUE,
+                "Installment overdue",
+                "Installment "
+                        + installment.getInstallmentNumber()
+                        + " with remaining amount "
+                        + installment
+                        .getRemainingAmountValue()
+                        .toPlainString()
+                        + " "
+                        + account.getCurrency()
+                        + " became overdue on "
+                        + installment.getDueDate()
+                        + ".",
+                "INSTALLMENT",
+                installment.getId()
         );
     }
 
