@@ -35,10 +35,12 @@ public class GatewaySecurityConfiguration {
                                         "/api/v1/notifications/internal/**"
                                 )
                                 .denyAll()
+
                                 .pathMatchers(
                                         "/api/v1/finance/internal/**"
                                 )
                                 .denyAll()
+
                                 .pathMatchers(
                                         HttpMethod.POST,
                                         "/api/v1/auth/register",
@@ -53,7 +55,8 @@ public class GatewaySecurityConfiguration {
                                 .pathMatchers(
                                         "/actuator/health",
                                         "/actuator/health/**",
-                                        "/actuator/info"
+                                        "/actuator/info",
+                                        "/actuator/prometheus"
                                 )
                                 .permitAll()
 

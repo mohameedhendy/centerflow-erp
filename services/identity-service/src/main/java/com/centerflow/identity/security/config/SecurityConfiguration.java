@@ -87,7 +87,8 @@ public class SecurityConfiguration {
                                 .requestMatchers(
                                         "/actuator/health",
                                         "/actuator/health/**",
-                                        "/actuator/info"
+                                        "/actuator/info",
+                                        "/actuator/prometheus"
                                 )
                                 .permitAll()
 

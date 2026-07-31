@@ -9,8 +9,10 @@ spring:
 
   jpa:
     open-in-view: false
+
     hibernate:
       ddl-auto: validate
+
     properties:
       hibernate:
         jdbc:
@@ -18,7 +20,8 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations:
+      - classpath:db/migration
 
   jackson:
     time-zone: UTC
@@ -30,8 +33,18 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include:
+          - health
+          - info
+          - metrics
+          - prometheus
 
   endpoint:
     health:
       show-details: never
+      probes:
+        enabled: true
+
+  metrics:
+    tags:
+      application: "${spring.application.name}"
