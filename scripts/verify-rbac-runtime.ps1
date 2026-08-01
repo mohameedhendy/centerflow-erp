@@ -1,6 +1,42 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$runtimeProjectRoot =
+    Split-Path `
+        -Parent `
+        $PSScriptRoot
+
+Set-Location $runtimeProjectRoot
+
+$composeFiles = @(
+    "-f",
+    "compose.yaml",
+    "-f",
+    "compose.dev.yaml"
+)
+
+Write-Host `
+    "Preparing Docker development runtime..." `
+    -ForegroundColor Cyan
+
+& docker compose @composeFiles config --quiet
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Development Docker Compose configuration is invalid"
+}
+
+& docker compose @composeFiles up `
+    --detach `
+    --build `
+    --remove-orphans
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to start the Docker development runtime"
+}
+
+& "$PSScriptRoot\wait-for-centerflow-runtime.ps1" `
+    -ComposeFiles $composeFiles
+
 function Get-DotEnvValue {
     param(
         [Parameter(Mandatory)]
@@ -187,7 +223,7 @@ function Invoke-IdentityDatabaseScalar {
         [string]$Sql
     )
 
-    $result = docker compose exec -T postgres `
+    $result = docker compose @composeFiles exec -T postgres `
         psql `
         -U $script:PostgresAdminUser `
         -d $script:IdentityDatabaseName `
@@ -208,7 +244,7 @@ function Invoke-IdentityDatabaseCommand {
         [string]$Sql
     )
 
-    docker compose exec -T postgres `
+    docker compose @composeFiles exec -T postgres `
         psql `
         -U $script:PostgresAdminUser `
         -d $script:IdentityDatabaseName `
@@ -329,7 +365,7 @@ try {
             ""
     }
 
-    docker compose up `
+    docker compose @composeFiles up `
         --detach `
         --build `
         --force-recreate `
@@ -553,7 +589,7 @@ WHERE user_role.user_id = '${targetUserId}';
     $env:IDENTITY_ADMIN_BOOTSTRAP_PASSWORD =
         ""
 
-    docker compose up `
+    docker compose @composeFiles up `
         --detach `
         --force-recreate `
         identity-service
@@ -672,7 +708,7 @@ finally {
             ""
 
         try {
-            docker compose up `
+            docker compose @composeFiles up `
                 --detach `
                 --force-recreate `
                 identity-service |

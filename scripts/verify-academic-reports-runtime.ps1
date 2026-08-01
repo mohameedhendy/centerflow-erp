@@ -1,6 +1,42 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$runtimeProjectRoot =
+    Split-Path `
+        -Parent `
+        $PSScriptRoot
+
+Set-Location $runtimeProjectRoot
+
+$composeFiles = @(
+    "-f",
+    "compose.yaml",
+    "-f",
+    "compose.dev.yaml"
+)
+
+Write-Host `
+    "Preparing Docker development runtime..." `
+    -ForegroundColor Cyan
+
+& docker compose @composeFiles config --quiet
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Development Docker Compose configuration is invalid"
+}
+
+& docker compose @composeFiles up `
+    --detach `
+    --build `
+    --remove-orphans
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to start the Docker development runtime"
+}
+
+& "$PSScriptRoot\wait-for-centerflow-runtime.ps1" `
+    -ComposeFiles $composeFiles
+
 function Invoke-AcademicSql {
     param(
         [Parameter(Mandatory = $true)]
@@ -8,7 +44,7 @@ function Invoke-AcademicSql {
     )
 
     $Sql |
-        docker compose exec -T postgres `
+        docker compose @composeFiles exec -T postgres `
             psql `
             -U centerflow_admin `
             -d academic_db `
@@ -539,7 +575,7 @@ try {
 
     Write-Host "Student attendance report passed." -ForegroundColor Green
 
-    $databaseResult = docker compose exec -T postgres `
+    $databaseResult = docker compose @composeFiles exec -T postgres `
         psql `
         -U centerflow_admin `
         -d academic_db `

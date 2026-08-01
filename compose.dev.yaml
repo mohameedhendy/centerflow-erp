@@ -1,0 +1,24 @@
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+
+  identity-service:
+    ports:
+      - "8081:8081"
+
+  academic-service:
+    ports:
+      - "8082:8082"
+
+  enrollment-service:
+    ports:
+      - "8083:8083"
+
+  finance-service:
+    ports:
+      - "8084:8084"
+
+  notification-service:
+    ports:
+      - "8085:8085"
