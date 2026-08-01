@@ -1,6 +1,8 @@
 package com.centerflow.identity.common.api;
 
+import com.centerflow.identity.common.exception.CannotRemoveOwnAdminRoleException;
 import com.centerflow.identity.common.exception.DuplicateEmailException;
+import com.centerflow.identity.common.exception.IdentityUserNotFoundException;
 import com.centerflow.identity.common.exception.InvalidCredentialsException;
 import com.centerflow.identity.common.exception.InvalidPasswordResetTokenException;
 import com.centerflow.identity.common.exception.InvalidRefreshTokenException;
@@ -11,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -63,6 +64,54 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(
+            InvalidPasswordResetTokenException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidPasswordResetToken(
+            InvalidPasswordResetTokenException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(
+            IdentityUserNotFoundException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleIdentityUserNotFound(
+            IdentityUserNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(
+            CannotRemoveOwnAdminRoleException.class
+    )
+    public ResponseEntity<ApiErrorResponse>
+    handleCannotRemoveOwnAdminRole(
+            CannotRemoveOwnAdminRoleException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(
             MethodArgumentNotValidException.class
     )
     public ResponseEntity<ApiErrorResponse>
@@ -78,9 +127,12 @@ public class GlobalExceptionHandler {
                 .forEach(fieldError ->
                         validationErrors.putIfAbsent(
                                 fieldError.getField(),
-                                fieldError.getDefaultMessage() == null
+                                fieldError
+                                        .getDefaultMessage()
+                                        == null
                                         ? "Invalid value"
-                                        : fieldError.getDefaultMessage()
+                                        : fieldError
+                                        .getDefaultMessage()
                         )
                 );
 
@@ -128,21 +180,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
-    }
-
-    @ExceptionHandler(
-            InvalidPasswordResetTokenException.class
-    )
-    public ResponseEntity<ApiErrorResponse>
-    handleInvalidPasswordResetToken(
-            InvalidPasswordResetTokenException exception,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage(),
-                request.getRequestURI(),
-                Map.of()
-        );
     }
 }

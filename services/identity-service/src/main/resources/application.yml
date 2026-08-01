@@ -35,6 +35,11 @@ security:
     token-ttl: "${PASSWORD_RESET_TOKEN_TTL:PT15M}"
     expose-token-in-response: "${PASSWORD_RESET_EXPOSE_TOKEN:false}"
 
+  bootstrap-admin:
+    enabled: "${IDENTITY_ADMIN_BOOTSTRAP_ENABLED:false}"
+    email: "${IDENTITY_ADMIN_BOOTSTRAP_EMAIL:}"
+    password: "${IDENTITY_ADMIN_BOOTSTRAP_PASSWORD:}"
+
 server:
   port: 8081
 

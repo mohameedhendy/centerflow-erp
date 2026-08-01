@@ -167,7 +167,7 @@ class EnrollmentGatewayRoutingSecurityTests {
                 )
                 .claim(
                         "roles",
-                        List.of("STUDENT")
+                        List.of("RECEPTIONIST")
                 )
                 .build();
 

@@ -314,7 +314,7 @@ class GatewayRoutingSecurityTests {
                 )
                 .claim(
                         "roles",
-                        List.of("STUDENT")
+                        List.of("ADMIN")
                 )
                 .build();
 

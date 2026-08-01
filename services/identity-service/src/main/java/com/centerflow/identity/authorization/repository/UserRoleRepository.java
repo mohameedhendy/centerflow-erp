@@ -16,4 +16,6 @@ public interface UserRoleRepository
             UUID userId,
             UUID roleId
     );
+
+    boolean existsByIdRoleId(UUID roleId);
 }

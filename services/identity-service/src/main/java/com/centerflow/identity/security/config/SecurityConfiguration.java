@@ -85,6 +85,11 @@ public class SecurityConfiguration {
                                 .permitAll()
 
                                 .requestMatchers(
+                                        "/api/v1/auth/admin/**"
+                                )
+                                .hasRole("ADMIN")
+
+                                .requestMatchers(
                                         "/actuator/health",
                                         "/actuator/health/**",
                                         "/actuator/info",

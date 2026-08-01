@@ -174,7 +174,7 @@ class FinanceGatewayRoutingSecurityTests {
                 )
                 .claim(
                         "roles",
-                        List.of("STUDENT")
+                        List.of("ACCOUNTANT")
                 )
                 .build();
 
