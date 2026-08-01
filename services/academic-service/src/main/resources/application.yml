@@ -3,7 +3,7 @@ spring:
     name: academic-service
 
   datasource:
-    url: "jdbc:postgresql://localhost:${POSTGRES_PORT:5433}/${ACADEMIC_DB_NAME:academic_db}"
+    url: "jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${ACADEMIC_DB_NAME:academic_db}"
     username: "${ACADEMIC_DB_USER:academic_app}"
     password: "${ACADEMIC_DB_PASSWORD}"
 

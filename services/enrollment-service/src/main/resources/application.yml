@@ -3,7 +3,7 @@ spring:
     name: enrollment-service
 
   datasource:
-    url: "jdbc:postgresql://localhost:${POSTGRES_PORT:5433}/${ENROLLMENT_DB_NAME:enrollment_db}"
+    url: "jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${ENROLLMENT_DB_NAME:enrollment_db}"
     username: "${ENROLLMENT_DB_USER:enrollment_app}"
     password: "${ENROLLMENT_DB_PASSWORD}"
 

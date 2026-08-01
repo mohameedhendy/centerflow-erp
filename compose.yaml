@@ -39,12 +39,221 @@ services:
       - ./infrastructure/docker/postgres/init:/docker-entrypoint-initdb.d:ro
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
 
+    networks:
+      - centerflow-network
+
+  identity-service:
+    image: centerflow/identity-service:local
+    container_name: centerflow-identity-service
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: identity-service
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      IDENTITY_DB_NAME: ${IDENTITY_DB_NAME}
+      IDENTITY_DB_USER: ${IDENTITY_DB_USER}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
+      JWT_REFRESH_TOKEN_TTL: ${JWT_REFRESH_TOKEN_TTL}
+
+      PASSWORD_RESET_TOKEN_TTL: ${PASSWORD_RESET_TOKEN_TTL}
+      PASSWORD_RESET_EXPOSE_TOKEN: ${PASSWORD_RESET_EXPOSE_TOKEN}
+
+    ports:
+      - "8081:8081"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - centerflow-network
+
+  academic-service:
+    image: centerflow/academic-service:local
+    container_name: centerflow-academic-service
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: academic-service
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      ACADEMIC_DB_NAME: ${ACADEMIC_DB_NAME}
+      ACADEMIC_DB_USER: ${ACADEMIC_DB_USER}
+      ACADEMIC_DB_PASSWORD: ${ACADEMIC_DB_PASSWORD}
+
+    ports:
+      - "8082:8082"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - centerflow-network
+
+  enrollment-service:
+    image: centerflow/enrollment-service:local
+    container_name: centerflow-enrollment-service
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: enrollment-service
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      ENROLLMENT_DB_NAME: ${ENROLLMENT_DB_NAME}
+      ENROLLMENT_DB_USER: ${ENROLLMENT_DB_USER}
+      ENROLLMENT_DB_PASSWORD: ${ENROLLMENT_DB_PASSWORD}
+
+    ports:
+      - "8083:8083"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - centerflow-network
+
+  notification-service:
+    image: centerflow/notification-service:local
+    container_name: centerflow-notification-service
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: notification-service
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME}
+      NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+
+    ports:
+      - "8085:8085"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - centerflow-network
+
+  finance-service:
+    image: centerflow/finance-service:local
+    container_name: centerflow-finance-service
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: finance-service
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      FINANCE_DB_NAME: ${FINANCE_DB_NAME}
+      FINANCE_DB_USER: ${FINANCE_DB_USER}
+      FINANCE_DB_PASSWORD: ${FINANCE_DB_PASSWORD}
+
+      NOTIFICATION_SERVICE_URL: http://notification-service:8085
+      NOTIFICATION_INTEGRATION_ENABLED: ${NOTIFICATION_INTEGRATION_ENABLED}
+
+      ENROLLMENT_SERVICE_URL: http://enrollment-service:8083
+      ENROLLMENT_ACTIVATION_INTEGRATION_ENABLED: ${ENROLLMENT_ACTIVATION_INTEGRATION_ENABLED}
+
+    ports:
+      - "8084:8084"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      enrollment-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+
+    networks:
+      - centerflow-network
+
+  api-gateway:
+    image: centerflow/api-gateway:local
+    container_name: centerflow-api-gateway
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+
+    environment:
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      ACADEMIC_SERVICE_URL: http://academic-service:8082
+      ENROLLMENT_SERVICE_URL: http://enrollment-service:8083
+      FINANCE_SERVICE_URL: http://finance-service:8084
+      NOTIFICATION_SERVICE_URL: http://notification-service:8085
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      identity-service:
+        condition: service_started
+      academic-service:
+        condition: service_started
+      enrollment-service:
+        condition: service_started
+      finance-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+
+    networks:
+      - centerflow-network
+
 volumes:
   centerflow_postgres_data:
     name: centerflow_postgres_data
+
+networks:
+  centerflow-network:
+    name: centerflow-network
+    driver: bridge
