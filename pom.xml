@@ -6,7 +6,6 @@
              https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -23,6 +22,14 @@
     <description>
         Backend-only microservices ERP for educational centers and institutes
     </description>
+    <url>https://github.com/mohameedhendy/centerflow-erp</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/mohameedhendy/centerflow-erp.git</connection>
+        <developerConnection>scm:git:https://github.com/mohameedhendy/centerflow-erp.git</developerConnection>
+        <url>https://github.com/mohameedhendy/centerflow-erp/tree/main</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>services/api-gateway</module>
